@@ -12,14 +12,14 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   register(user: User): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, user, {
-      responseType: 'text',
-    });
+    return this.http.post<any>(`${this.apiUrl}/register`, user);
   }
 
   activate(token: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/activate/${token}`, {
-      responseType: 'text',
-    });
+    return this.http.get<any>(`${this.apiUrl}/activate/${token}`);
+  }
+
+  login(credentials: { email: string; password: string }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/login`, credentials);
   }
 }

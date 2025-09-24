@@ -28,13 +28,32 @@
     name="organization"
     required
   />
+
   <input
     type="password"
     placeholder="Password"
     [(ngModel)]="user.password"
     name="password"
+    (input)="checkPasswordStrength()"
     required
   />
+
+  <!-- Progress bar -->
+  <div class="password-strength">
+    <div
+      class="strength-bar"
+      [ngStyle]="{
+        'width.%': (passwordStrength + 1) * 20,
+        'background-color': getStrengthColor()
+      }"
+    ></div>
+  </div>
+
+  <div *ngIf="passwordFeedback">
+    <p>Password strength: {{ passwordStrength }}/4</p>
+    <p>{{ passwordFeedback }}</p>
+  </div>
+
   <input
     type="password"
     placeholder="Confirm Password"
@@ -42,7 +61,17 @@
     name="confirmPassword"
     required
   />
+  <div *ngIf="user.confirmPassword && user.password !== user.confirmPassword">
+    <p style="color: red">Passwords do not match!</p>
+  </div>
+
+  <!-- Success / error messages -->
+  <p *ngIf="successMessage" style="color: green">{{ successMessage }}</p>
+  <p *ngIf="errorMessage" style="color: red">{{ errorMessage }}</p>
+
+  <p>
+    Već imate nalog?
+    <a href="/login">Prijavite se ovde</a>
+  </p>
   <button type="submit">Register</button>
 </form>
-
-<p>{{ message }}</p>

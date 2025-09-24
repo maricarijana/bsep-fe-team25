@@ -1,0 +1,26 @@
+<form (ngSubmit)="login()">
+  <input
+    type="email"
+    placeholder="Email"
+    [(ngModel)]="credentials.email"
+    name="email"
+    required
+  />
+  <input
+    type="password"
+    placeholder="Password"
+    [(ngModel)]="credentials.password"
+    name="password"
+    required
+  />
+  <button type="submit">Login</button>
+
+  <!-- link prebaci OVDE -->
+  <p class="hint">
+    Nemate nalog?
+    <a href="/register">Registrujte se ovde</a>
+  </p>
+</form>
+
+<p *ngIf="successMessage" style="color: green">{{ successMessage }}</p>
+<p *ngIf="errorMessage" style="color: red">{{ errorMessage }}</p>
