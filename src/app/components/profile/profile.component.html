@@ -1,0 +1,68 @@
+<div class="profile-container">
+  <div class="profile-card">
+    <div class="header">
+      <h1>Where You're Logged In</h1>
+      <p class="subtitle">
+        These are all the places you're currently logged into your account.
+      </p>
+    </div>
+
+    <div *ngIf="successMessage" class="message success">
+      {{ successMessage }}
+    </div>
+
+    <div *ngIf="errorMessage" class="message error">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="loading" class="loading">Loading sessions...</div>
+
+    <div *ngIf="!loading && sessions.length > 0" class="sessions-table">
+      <div class="table-header">
+        <div class="column device">Device</div>
+        <div class="column location">Location</div>
+        <div class="column activity">Last Activity</div>
+        <div class="column action">Action</div>
+      </div>
+
+      <div
+        *ngFor="let session of sessions"
+        class="table-row"
+        [class.current]="session.currentSession"
+      >
+        <div class="column device">
+          <div class="device-info">
+            <span class="device-name">{{ session.deviceDescription }}</span>
+            <span *ngIf="session.currentSession" class="badge"
+              >This Session</span
+            >
+          </div>
+        </div>
+        <div class="column location">{{ session.ipAddress }}</div>
+        <div class="column activity">{{ formatDate(session.lastUsed) }}</div>
+        <div class="column action">
+          <button
+            *ngIf="!session.currentSession"
+            class="revoke-btn"
+            (click)="revokeSession(session.jti)"
+          >
+            Revoke
+          </button>
+          <span *ngIf="session.currentSession" class="current-indicator"
+            >→</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!loading && sessions.length === 0" class="empty-state">
+      No active sessions found.
+    </div>
+
+    <div *ngIf="!loading && sessions.length > 1" class="footer">
+      <button class="revoke-all-btn" (click)="revokeAllOthers()">
+        Log Out of All Other Sessions
+      </button>
+    </div>
+  </div>
+</div>
