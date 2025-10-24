@@ -1,1 +1,12 @@
-<p>home-page works!</p>
+<header class="header">
+  <h1 class="logo">BSEP Sistem</h1>
+
+  <button *ngIf="isLoggedIn()" class="logout-btn" (click)="logout()">
+    Logout
+  </button>
+</header>
+
+<main class="main-content">
+  <h2>Dobrodošli!</h2>
+  <p>Uspješno ste ulogovani u sistem.</p>
+</main>

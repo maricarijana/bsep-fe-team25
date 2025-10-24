@@ -2,11 +2,12 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
+import { RecaptchaModule } from 'ng-recaptcha';
+import { Router, RouterLink } from '@angular/router'; // ✅ dodaj RouterLink
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, RecaptchaModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
@@ -14,6 +15,7 @@ export class LoginComponent {
   credentials = {
     email: '',
     password: '',
+    captchaToken: '',
   };
 
   successMessage: string = '';
@@ -21,9 +23,18 @@ export class LoginComponent {
 
   constructor(private authService: AuthService, private router: Router) {}
 
+  onCaptchaResolved(token: string | null): void {
+    this.credentials.captchaToken = token || '';
+  }
+
   login(): void {
     this.successMessage = '';
     this.errorMessage = '';
+
+    if (!this.credentials.captchaToken) {
+      this.errorMessage = 'Molimo potvrdite da niste robot.';
+      return;
+    }
 
     this.authService.login(this.credentials).subscribe({
       next: (res) => {

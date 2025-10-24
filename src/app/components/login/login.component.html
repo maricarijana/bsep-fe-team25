@@ -13,12 +13,24 @@
     name="password"
     required
   />
+
+  <re-captcha
+    siteKey="6LclNfUrAAAAAAkHeCv_2XICbNIH_OoiLWatbdW9"
+    (resolved)="onCaptchaResolved($event)"
+  >
+  </re-captcha>
+
   <button type="submit">Login</button>
 
   <!-- link prebaci OVDE -->
   <p class="hint">
     Nemate nalog?
     <a href="/register">Registrujte se ovde</a>
+  </p>
+
+  <p class="hint">
+    Zaboravili ste lozinku?
+    <a routerLink="/forgot-password">Kliknite ovde</a>
   </p>
 </form>
 
