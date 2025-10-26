@@ -57,5 +57,34 @@
   p {
     font-size: 1.1rem;
     color: #475569;
+    margin-bottom: 30px;
+  }
+}
+
+/* === ACTIONS === */
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 30px;
+}
+
+.primary-btn {
+  background-color: #3b82f6; /* plava */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+
+  &:hover {
+    background-color: #2563eb; /* tamnija plava */
+  }
+
+  &:active {
+    transform: scale(0.98);
   }
 }

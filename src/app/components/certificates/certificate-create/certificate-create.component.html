@@ -1,0 +1,221 @@
+<div class="certificate-create-container">
+  <div class="header">
+    <h1>Create New Certificate</h1>
+    <button class="cancel-btn" (click)="cancel()">Cancel</button>
+  </div>
+
+  <form class="certificate-form" [formGroup]="certificateForm" (ngSubmit)="createCertificate()">
+
+    <!-- Certificate Type Selection -->
+    <section class="form-section">
+      <h2>Certificate Type</h2>
+      <div class="type-buttons">
+        <button
+          type="button"
+          class="type-btn"
+          [class.active]="selectedType === 'ROOT_CA'"
+          (click)="selectType('ROOT_CA')">
+          <h3>Root CA</h3>
+          <p>Self-signed certificate at the top of the trust chain</p>
+        </button>
+        <button
+          type="button"
+          class="type-btn"
+          [class.active]="selectedType === 'INTERMEDIATE_CA'"
+          (click)="selectType('INTERMEDIATE_CA')">
+          <h3>Intermediate CA</h3>
+          <p>Certificate Authority signed by another CA</p>
+        </button>
+        <button
+          type="button"
+          class="type-btn"
+          [class.active]="selectedType === 'END_ENTITY'"
+          (click)="selectType('END_ENTITY')">
+          <h3>End Entity</h3>
+          <p>Certificate for servers, clients, or applications</p>
+        </button>
+      </div>
+    </section>
+
+    <!-- Basic Information -->
+    <section class="form-section">
+      <h2>Basic Information</h2>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Common Name *</label>
+          <input type="text" formControlName="commonName" placeholder="e.g., www.example.com or My CA">
+          <div class="error" *ngIf="certificateForm.get('commonName')?.hasError('required') && certificateForm.get('commonName')?.touched">
+            Common Name is required
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>Organization *</label>
+          <input type="text" formControlName="organization" placeholder="e.g., My Company Inc.">
+          <div class="error" *ngIf="certificateForm.get('organization')?.hasError('required') && certificateForm.get('organization')?.touched">
+            Organization is required
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>Organizational Unit</label>
+          <input type="text" formControlName="organizationalUnit" placeholder="e.g., IT Department">
+        </div>
+
+        <div class="form-field">
+          <label>Country *</label>
+          <div class="country-buttons">
+            <button
+              *ngFor="let country of countries"
+              type="button"
+              class="country-btn"
+              [class.active]="certificateForm.get('country')?.value === country.code"
+              (click)="selectCountry(country.code)">
+              {{ country.code }}
+            </button>
+          </div>
+          <div class="error" *ngIf="certificateForm.get('country')?.hasError('required') && certificateForm.get('country')?.touched">
+            Country is required
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>State/Province</label>
+          <input type="text" formControlName="state" placeholder="e.g., Vojvodina">
+        </div>
+
+        <div class="form-field">
+          <label>Locality/City</label>
+          <input type="text" formControlName="locality" placeholder="e.g., Pančevo">
+        </div>
+
+        <div class="form-field full-width">
+          <label>Email</label>
+          <input type="email" formControlName="email" placeholder="admin@example.com">
+          <div class="error" *ngIf="certificateForm.get('email')?.hasError('email') && certificateForm.get('email')?.touched">
+            Please enter a valid email
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Validity -->
+    <section class="form-section">
+      <h2>Validity Period</h2>
+      <div class="form-field">
+        <label>Validity (Years) *</label>
+        <input type="number" formControlName="validityYears" min="1" max="30" placeholder="5">
+        <div class="validity-info">
+          <p><strong>Valid from:</strong> {{ getValidFromDate() | date: 'medium' }}</p>
+          <p><strong>Valid until:</strong> {{ getValidUntilDate() | date: 'medium' }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Issuer Selection (for non-ROOT_CA) -->
+    <section class="form-section" *ngIf="selectedType !== 'ROOT_CA'">
+      <h2>Issuer Certificate</h2>
+      <div class="form-field">
+        <label>Select Issuer CA *</label>
+        <div class="issuer-list" *ngIf="activeCAs.length > 0">
+          <button
+            *ngFor="let ca of activeCAs"
+            type="button"
+            class="issuer-btn"
+            [class.active]="certificateForm.get('issuerSerialNumber')?.value === ca.serialNumber"
+            (click)="selectIssuer(ca.serialNumber)">
+            <strong>{{ ca.commonName }}</strong>
+            <span class="issuer-type">{{ ca.certificateType }}</span>
+            <span class="issuer-validity">Valid until: {{ ca.validUntil | date: 'short' }}</span>
+          </button>
+        </div>
+        <div class="warning" *ngIf="activeCAs.length === 0 && !loading">
+          <p>No active CA certificates available. Please create a Root CA first.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Extensions (for non-ROOT_CA) -->
+    <section class="form-section" *ngIf="selectedType !== 'ROOT_CA'">
+      <h2>Extensions</h2>
+
+      <!-- Path Length for INTERMEDIATE_CA -->
+      <div class="form-field" *ngIf="selectedType === 'INTERMEDIATE_CA'">
+        <label>Path Length</label>
+        <input type="number" formControlName="pathLength" min="0" max="10" placeholder="0">
+        <p class="hint">Maximum number of intermediate CAs that can follow in the certificate chain</p>
+      </div>
+
+      <!-- Key Usage -->
+      <div class="form-field">
+        <label>Key Usage</label>
+        <div class="checkbox-group">
+          <label class="checkbox-label" *ngFor="let option of keyUsageOptions">
+            <input
+              type="checkbox"
+              [checked]="isKeyUsageSelected(option.value)"
+              (change)="onKeyUsageChange($event, option.value)">
+            {{ option.label }}
+          </label>
+        </div>
+      </div>
+
+      <!-- Extended Key Usage for END_ENTITY -->
+      <div class="form-field" *ngIf="selectedType === 'END_ENTITY'">
+        <label>Extended Key Usage</label>
+        <div class="checkbox-group">
+          <label class="checkbox-label" *ngFor="let option of extendedKeyUsageOptions">
+            <input
+              type="checkbox"
+              [checked]="isExtendedKeyUsageSelected(option.value)"
+              (change)="onExtendedKeyUsageChange($event, option.value)">
+            {{ option.label }}
+          </label>
+        </div>
+      </div>
+
+      <!-- Subject Alternative Names for END_ENTITY -->
+      <div class="form-field" *ngIf="selectedType === 'END_ENTITY'">
+        <label>Subject Alternative Names</label>
+        <div class="san-list">
+          <div class="san-item" *ngFor="let san of subjectAlternativeNames; let i = index">
+            <div class="san-type-buttons">
+              <button
+                type="button"
+                class="san-type-btn"
+                [class.active]="san.type === 'DNS'"
+                (click)="updateSanType(i, 'DNS')">DNS</button>
+              <button
+                type="button"
+                class="san-type-btn"
+                [class.active]="san.type === 'IP'"
+                (click)="updateSanType(i, 'IP')">IP</button>
+              <button
+                type="button"
+                class="san-type-btn"
+                [class.active]="san.type === 'EMAIL'"
+                (click)="updateSanType(i, 'EMAIL')">Email</button>
+            </div>
+            <input
+              type="text"
+              class="san-value-input"
+              [value]="san.value"
+              (input)="updateSanValue(i, $event)"
+              [placeholder]="san.type === 'DNS' ? 'example.com' : san.type === 'IP' ? '192.168.1.1' : 'user@example.com'">
+            <button type="button" class="remove-btn" (click)="removeSubjectAlternativeName(i)">Remove</button>
+          </div>
+        </div>
+        <button type="button" class="add-btn" (click)="addSubjectAlternativeName()">Add Subject Alternative Name</button>
+      </div>
+    </section>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="cancel-btn" (click)="cancel()">Cancel</button>
+      <button type="submit" class="submit-btn" [disabled]="!certificateForm.valid || creating">
+        <span *ngIf="!creating">Create Certificate</span>
+        <span *ngIf="creating">Creating...</span>
+      </button>
+    </div>
+  </form>
+</div>

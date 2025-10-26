@@ -1,15 +1,16 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service'; // prilagodi putanju
 
 @Component({
   selector: 'app-nav-bar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   template: `
     <nav class="nav">
       <a routerLink="/home">Home</a>
+      <a routerLink="/certificates" *ngIf="isLoggedIn()">Certificates</a>
       <a routerLink="/register" *ngIf="!isLoggedIn()">Register</a>
 
       <!-- logout button vidljiv SAMO kad je korisnik ulogovan -->
