@@ -1,7 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CertificateService } from '../../../services/certificate.service';
 import { CreateCertificateRequest } from '../../../model/certificate-request.model';
@@ -15,13 +20,9 @@ interface SubjectAlternativeName {
 @Component({
   selector: 'app-certificate-create',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatSnackBarModule
-  ],
+  imports: [CommonModule, ReactiveFormsModule, MatSnackBarModule],
   templateUrl: './certificate-create.component.html',
-  styleUrls: ['./certificate-create.component.scss']
+  styleUrls: ['./certificate-create.component.scss'],
 })
 export class CertificateCreateComponent implements OnInit {
   certificateForm!: FormGroup;
@@ -41,7 +42,7 @@ export class CertificateCreateComponent implements OnInit {
     { code: 'NL', name: 'Netherlands' },
     { code: 'BE', name: 'Belgium' },
     { code: 'AT', name: 'Austria' },
-    { code: 'CH', name: 'Switzerland' }
+    { code: 'CH', name: 'Switzerland' },
   ];
 
   keyUsageOptions = [
@@ -49,14 +50,14 @@ export class CertificateCreateComponent implements OnInit {
     { value: 'cRLSign', label: 'CRL Sign' },
     { value: 'digitalSignature', label: 'Digital Signature' },
     { value: 'keyEncipherment', label: 'Key Encipherment' },
-    { value: 'dataEncipherment', label: 'Data Encipherment' }
+    { value: 'dataEncipherment', label: 'Data Encipherment' },
   ];
 
   extendedKeyUsageOptions = [
     { value: 'serverAuth', label: 'Server Authentication' },
     { value: 'clientAuth', label: 'Client Authentication' },
     { value: 'codeSigning', label: 'Code Signing' },
-    { value: 'emailProtection', label: 'Email Protection' }
+    { value: 'emailProtection', label: 'Email Protection' },
   ];
 
   subjectAlternativeNames: SubjectAlternativeName[] = [];
@@ -81,11 +82,14 @@ export class CertificateCreateComponent implements OnInit {
       state: [''],
       locality: [''],
       email: ['', Validators.email],
-      validityYears: [5, [Validators.required, Validators.min(1), Validators.max(30)]],
+      validityYears: [
+        5,
+        [Validators.required, Validators.min(1), Validators.max(30)],
+      ],
       issuerSerialNumber: [''],
       pathLength: [0],
       keyUsage: [[]],
-      extendedKeyUsage: [[]]
+      extendedKeyUsage: [[]],
     });
   }
 
@@ -104,6 +108,25 @@ export class CertificateCreateComponent implements OnInit {
       }
     }
     issuerControl?.updateValueAndValidity();
+
+    // ✅ DODAJ OVO - Set default keyUsage za INTERMEDIATE_CA
+    if (type === 'INTERMEDIATE_CA') {
+      this.certificateForm.patchValue({
+        keyUsage: ['keyCertSign', 'cRLSign'], // ← Default za CA
+        pathLength: 1, // ← Default path length
+      });
+    } else if (type === 'END_ENTITY') {
+      this.certificateForm.patchValue({
+        keyUsage: ['digitalSignature', 'keyEncipherment'], // ← Default za server
+        extendedKeyUsage: ['serverAuth'], // ← Default za server
+      });
+    } else {
+      // ROOT_CA
+      this.certificateForm.patchValue({
+        keyUsage: [],
+        extendedKeyUsage: [],
+      });
+    }
   }
 
   selectCountry(code: string): void {
@@ -122,9 +145,11 @@ export class CertificateCreateComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.snackBar.open('Failed to load CA certificates', 'Close', { duration: 3000 });
+        this.snackBar.open('Failed to load CA certificates', 'Close', {
+          duration: 3000,
+        });
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -161,25 +186,26 @@ export class CertificateCreateComponent implements OnInit {
 
     if (event.target.checked) {
       this.certificateForm.patchValue({
-        keyUsage: [...currentUsages, value]
+        keyUsage: [...currentUsages, value],
       });
     } else {
       this.certificateForm.patchValue({
-        keyUsage: currentUsages.filter((u: string) => u !== value)
+        keyUsage: currentUsages.filter((u: string) => u !== value),
       });
     }
   }
 
   onExtendedKeyUsageChange(event: any, value: string): void {
-    const currentUsages = this.certificateForm.get('extendedKeyUsage')?.value || [];
+    const currentUsages =
+      this.certificateForm.get('extendedKeyUsage')?.value || [];
 
     if (event.target.checked) {
       this.certificateForm.patchValue({
-        extendedKeyUsage: [...currentUsages, value]
+        extendedKeyUsage: [...currentUsages, value],
       });
     } else {
       this.certificateForm.patchValue({
-        extendedKeyUsage: currentUsages.filter((u: string) => u !== value)
+        extendedKeyUsage: currentUsages.filter((u: string) => u !== value),
       });
     }
   }
@@ -196,7 +222,9 @@ export class CertificateCreateComponent implements OnInit {
 
   createCertificate(): void {
     if (!this.certificateForm.valid) {
-      this.snackBar.open('Please fill in all required fields', 'Close', { duration: 3000 });
+      this.snackBar.open('Please fill in all required fields', 'Close', {
+        duration: 3000,
+      });
       return;
     }
 
@@ -209,27 +237,34 @@ export class CertificateCreateComponent implements OnInit {
       state: formValue.state,
       locality: formValue.locality,
       email: formValue.email,
-      validityYears: formValue.validityYears
+      validityYears: formValue.validityYears,
     };
 
+    // ✅ ISPRAVLJENO - Dodaj issuerSerialNumber za INTERMEDIATE i END_ENTITY
     if (this.selectedType !== 'ROOT_CA') {
       request.issuerSerialNumber = formValue.issuerSerialNumber;
     }
 
+    // ✅ ISPRAVLJENO - Dodaj CA-specific polja za INTERMEDIATE
     if (this.selectedType === 'INTERMEDIATE_CA') {
       request.isCA = true;
       request.pathLength = formValue.pathLength;
-      request.keyUsage = formValue.keyUsage;
+      request.keyUsage =
+        formValue.keyUsage.length > 0
+          ? formValue.keyUsage
+          : ['keyCertSign', 'cRLSign']; // ← Fallback ako korisnik nije odabrao
     }
 
+    // ✅ ISPRAVLJENO - Dodaj END_ENTITY-specific polja
     if (this.selectedType === 'END_ENTITY') {
       request.keyUsage = formValue.keyUsage;
       request.extendedKeyUsage = formValue.extendedKeyUsage;
 
+      // Subject Alternative Names
       if (this.subjectAlternativeNames.length > 0) {
         request.subjectAlternativeNames = this.subjectAlternativeNames
-          .filter(san => san.value.trim())
-          .map(san => `${san.type}:${san.value}`);
+          .filter((san) => san.value.trim())
+          .map((san) => `${san.type}:${san.value}`);
       }
     }
 
@@ -246,14 +281,17 @@ export class CertificateCreateComponent implements OnInit {
 
     apiCall.subscribe({
       next: (cert) => {
-        this.snackBar.open('Certificate created successfully!', 'Close', { duration: 3000 });
+        this.snackBar.open('Certificate created successfully!', 'Close', {
+          duration: 3000,
+        });
         this.router.navigate(['/certificates']);
       },
       error: (err) => {
-        const message = err.error?.message || 'Failed to create certificate';
+        const message =
+          err.error?.message || err.error || 'Failed to create certificate';
         this.snackBar.open(message, 'Close', { duration: 5000 });
         this.creating = false;
-      }
+      },
     });
   }
 
