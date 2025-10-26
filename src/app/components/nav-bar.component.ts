@@ -12,6 +12,7 @@ import { AuthService } from '../services/auth.service'; // prilagodi putanju
       <a routerLink="/home">Home</a>
       <a routerLink="/certificates" *ngIf="isLoggedIn()">Certificates</a>
       <a routerLink="/register" *ngIf="!isLoggedIn()">Register</a>
+      <a routerLink="/profile" *ngIf="isLoggedIn()">Profile</a>
 
       <!-- logout button vidljiv SAMO kad je korisnik ulogovan -->
       <button *ngIf="isLoggedIn()" (click)="logout()" class="logout-btn">
