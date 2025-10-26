@@ -17,6 +17,10 @@ export class HeaderComponent {
     return this.authService.isLoggedIn();
   }
 
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
   logout(): void {
     this.authService.logout().subscribe({
       next: () => {

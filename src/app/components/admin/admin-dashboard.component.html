@@ -1,0 +1,35 @@
+<div class="admin-dashboard">
+  <div class="header">
+    <h1>Admin Dashboard</h1>
+    <p class="subtitle">Manage CA Users</p>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs">
+    <button
+      class="tab"
+      [class.active]="activeTab === 'create'"
+      (click)="setActiveTab('create')"
+    >
+      <span class="tab-icon">➕</span>
+      Create CA User
+    </button>
+    <button
+      class="tab"
+      [class.active]="activeTab === 'list'"
+      (click)="setActiveTab('list')"
+    >
+      <span class="tab-icon">📋</span>
+      All CA Users
+    </button>
+  </div>
+
+  <!-- Tab Content -->
+  <div class="tab-content">
+    <app-create-ca-user
+      *ngIf="activeTab === 'create'"
+      (userCreated)="onUserCreated()"
+    ></app-create-ca-user>
+    <app-ca-users-list *ngIf="activeTab === 'list'"></app-ca-users-list>
+  </div>
+</div>
