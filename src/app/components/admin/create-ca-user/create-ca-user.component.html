@@ -1,0 +1,105 @@
+<div class="create-ca-user">
+  <div class="form-header">
+    <h2>Create CA User</h2>
+    <p class="info-message">
+      ℹ️ User will receive login credentials via email with a temporary password
+      that must be changed on first login.
+    </p>
+  </div>
+
+  <form (ngSubmit)="createCAUser()">
+    <!-- Email Field -->
+    <div class="input-group">
+      <label for="email">
+        Email Address <span class="required">*</span>
+      </label>
+      <input
+        id="email"
+        type="email"
+        placeholder="user@example.com"
+        [(ngModel)]="formData.email"
+        name="email"
+        (input)="clearMessages()"
+        required
+      />
+      <div
+        class="validation-error"
+        *ngIf="formData.email && !isValidEmail(formData.email)"
+      >
+        Please enter a valid email address
+      </div>
+    </div>
+
+    <!-- Full Name Field -->
+    <div class="input-group">
+      <label for="fullName">
+        Full Name <span class="required">*</span>
+      </label>
+      <input
+        id="fullName"
+        type="text"
+        placeholder="John Doe"
+        [(ngModel)]="formData.fullName"
+        name="fullName"
+        (input)="clearMessages()"
+        required
+      />
+      <div
+        class="validation-error"
+        *ngIf="formData.fullName && formData.fullName.length < 3"
+      >
+        Full name must be at least 3 characters
+      </div>
+    </div>
+
+    <!-- Organization Field -->
+    <div class="input-group">
+      <label for="organization">
+        Organization <span class="required">*</span>
+      </label>
+      <input
+        id="organization"
+        type="text"
+        placeholder="Acme Corporation"
+        [(ngModel)]="formData.organization"
+        name="organization"
+        (input)="clearMessages()"
+        required
+      />
+      <div
+        class="validation-error"
+        *ngIf="formData.organization && formData.organization.length < 2"
+      >
+        Organization must be at least 2 characters
+      </div>
+    </div>
+
+    <!-- Success Message -->
+    <div class="alert success-alert" *ngIf="successMessage">
+      <div class="alert-icon">✅</div>
+      <div class="alert-content">
+        <p class="alert-title">Success!</p>
+        <p class="alert-message">{{ successMessage }}</p>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div class="alert error-alert" *ngIf="errorMessage">
+      <div class="alert-icon">❌</div>
+      <div class="alert-content">
+        <p class="alert-title">Error</p>
+        <p class="alert-message">{{ errorMessage }}</p>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <button
+      type="submit"
+      class="submit-button"
+      [disabled]="!isFormValid() || isLoading"
+      [class.loading]="isLoading"
+    >
+      {{ isLoading ? 'Creating CA User...' : 'Create CA User' }}
+    </button>
+  </form>
+</div>

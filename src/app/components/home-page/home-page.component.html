@@ -2,7 +2,7 @@
   <h2>Dobrodošli!</h2>
   <p>Uspješno ste ulogovani u sistem.</p>
 
-  <div class="actions">
+  <div class="actions" *ngIf="isAdmin()">
     <button class="primary-btn" (click)="navigateToCertificates()">
       Certificates
     </button>

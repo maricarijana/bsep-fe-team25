@@ -2,6 +2,11 @@
   <div class="header-content">
     <a routerLink="/home" class="logo">BSEP Sistem</a>
 
+    <nav class="nav-links" *ngIf="isAdmin()">
+      <a routerLink="/certificates" class="nav-link">Certificates</a>
+      <a routerLink="/admin/ca-users" class="nav-link admin-link">Admin Panel</a>
+    </nav>
+
     <div class="header-actions">
       <a routerLink="/profile" class="profile-link" title="Profil">
         <svg

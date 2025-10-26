@@ -11,6 +11,7 @@ import { AuthService } from '../services/auth.service'; // prilagodi putanju
     <nav class="nav">
       <a routerLink="/home">Home</a>
       <a routerLink="/certificates" *ngIf="isLoggedIn()">Certificates</a>
+      <a routerLink="/admin/ca-users" *ngIf="isLoggedIn()" class="admin-link">Admin Panel</a>
       <a routerLink="/register" *ngIf="!isLoggedIn()">Register</a>
       <a routerLink="/profile" *ngIf="isLoggedIn()">Profile</a>
 
@@ -26,6 +27,17 @@ import { AuthService } from '../services/auth.service'; // prilagodi putanju
         display: flex;
         gap: 12px;
         align-items: center;
+      }
+      .admin-link {
+        background: #7c3aed;
+        color: white !important;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .admin-link:hover {
+        background: #6d28d9;
       }
       .logout-btn {
         background: #e53e3e;

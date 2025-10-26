@@ -9,22 +9,50 @@ import { CertificateListComponent } from './components/certificates/certificate-
 import { CertificateCreateComponent } from './components/certificates/certificate-create/certificate-create.component';
 import { CertificateDetailsComponent } from './components/certificates/certificate-details/certificate-details.component';
 import { ProfileComponent } from './components/profile/profile.component';
+import { ChangePasswordComponent } from './components/change-password/change-password.component';
+import { AdminDashboardComponent } from './components/admin/admin-dashboard.component';
+import {
+  changePasswordGuard,
+  mustChangePasswordGuard,
+} from './guards/change-password.guard';
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
-  { path: 'home', component: HomePageComponent, canActivate: [authGuard] },
-  { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password/:token', component: ResetPasswordComponent },
+  // Ruta za obaveznu promjenu lozinke
+  {
+    path: 'change-password',
+    component: ChangePasswordComponent,
+    canActivate: [authGuard, changePasswordGuard],
+  },
+  // Sve zaštićene rute provjeravaju mustChangePassword flag
+  {
+    path: 'home',
+    component: HomePageComponent,
+    canActivate: [authGuard, mustChangePasswordGuard],
+  },
+  {
+    path: 'profile',
+    component: ProfileComponent,
+    canActivate: [authGuard, mustChangePasswordGuard],
+  },
   {
     path: 'certificates',
-    canActivate: [authGuard],
+    canActivate: [authGuard, mustChangePasswordGuard],
     children: [
       { path: '', component: CertificateListComponent },
       { path: 'create', component: CertificateCreateComponent },
       { path: ':serialNumber', component: CertificateDetailsComponent },
     ],
+  },
+  // Admin rute - backend provjerava role preko JWT tokena
+  {
+    path: 'admin/ca-users',
+    component: AdminDashboardComponent,
+    canActivate: [authGuard, mustChangePasswordGuard],
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];

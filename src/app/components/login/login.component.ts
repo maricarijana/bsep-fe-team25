@@ -44,11 +44,19 @@ export class LoginComponent {
         if (res.token) {
           localStorage.setItem('jwt', res.token); //  snimanje tokena
         }
-        this.router.navigate(['/home']);
+
+        // Provjera da li korisnik mora promijeniti lozinku
+        if (res.mustChangePassword) {
+          localStorage.setItem('mustChangePassword', 'true');
+          this.router.navigate(['/change-password']);
+        } else {
+          this.router.navigate(['/home']);
+        }
       },
-      error: (err) => {
-        this.errorMessage = err.error.message || 'Login failed!';
-      },
+    error: (err) => {
+  console.log('Full error object:', err); // ← pogledaj u konzoli šta backend vraća
+  this.errorMessage = err.error?.message || err.message || 'Login failed!';
+}
     });
   }
 }
