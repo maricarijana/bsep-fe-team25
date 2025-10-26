@@ -1,0 +1,100 @@
+<div class="certificate-list-container">
+  <div class="header">
+    <h1>Certificates</h1>
+    <button class="create-btn" (click)="createNew()">
+      Create New Certificate
+    </button>
+  </div>
+
+  <div class="filters">
+    <div class="search-field">
+      <input
+        type="text"
+        [(ngModel)]="searchText"
+        (ngModelChange)="onSearchChange()"
+        placeholder="Search by name, serial number, or organization"
+        class="search-input">
+    </div>
+
+    <div class="type-filter">
+      <button
+        class="filter-btn"
+        [class.active]="selectedType === 'ALL'"
+        (click)="selectType('ALL')">
+        All Types
+      </button>
+      <button
+        class="filter-btn"
+        [class.active]="selectedType === 'ROOT_CA'"
+        (click)="selectType('ROOT_CA')">
+        Root CA
+      </button>
+      <button
+        class="filter-btn"
+        [class.active]="selectedType === 'INTERMEDIATE_CA'"
+        (click)="selectType('INTERMEDIATE_CA')">
+        Intermediate CA
+      </button>
+      <button
+        class="filter-btn"
+        [class.active]="selectedType === 'END_ENTITY'"
+        (click)="selectType('END_ENTITY')">
+        End Entity
+      </button>
+    </div>
+  </div>
+
+  <div class="table-container" *ngIf="!loading">
+    <table class="certificates-table" *ngIf="filteredCertificates.length > 0">
+      <thead>
+        <tr>
+          <th>Serial Number</th>
+          <th>Common Name</th>
+          <th>Type</th>
+          <th>Organization</th>
+          <th>Valid Until</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cert of filteredCertificates">
+          <td>
+            <span class="serial-number" [title]="cert.serialNumber">
+              {{ cert.serialNumber.substring(0, 16) }}...
+            </span>
+          </td>
+          <td>{{ cert.commonName }}</td>
+          <td>
+            <span class="badge" [ngClass]="getTypeClass(cert.certificateType)">
+              {{ cert.certificateType.replace('_', ' ') }}
+            </span>
+          </td>
+          <td>{{ cert.organization }}</td>
+          <td>{{ cert.validUntil | date: 'medium' }}</td>
+          <td>
+            <span class="badge" [ngClass]="getStatusInfo(cert).class">
+              {{ getStatusInfo(cert).label }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="action-btn view-btn" (click)="viewDetails(cert.serialNumber)" title="View Details">
+              View
+            </button>
+            <button class="action-btn download-btn" (click)="downloadPEM(cert)" title="Download PEM">
+              Download
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="no-data" *ngIf="filteredCertificates.length === 0">
+      <p>No certificates found</p>
+    </div>
+  </div>
+
+  <div class="loading-spinner" *ngIf="loading">
+    <div class="spinner"></div>
+  </div>
+</div>

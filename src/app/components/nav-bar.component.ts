@@ -10,6 +10,7 @@ import { AuthService } from '../services/auth.service'; // prilagodi putanju
   template: `
     <nav class="nav">
       <a routerLink="/home">Home</a>
+      <a routerLink="/certificates" *ngIf="isLoggedIn()">Certificates</a>
       <a routerLink="/register" *ngIf="!isLoggedIn()">Register</a>
       <a routerLink="/profile" *ngIf="isLoggedIn()">Profile</a>
 

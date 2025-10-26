@@ -1,0 +1,483 @@
+.certificate-details-container {
+  padding: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+
+  .loading-spinner {
+    display: flex;
+    justify-content: center;
+    padding: 48px;
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3b82f6;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .details-content {
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+
+      .back-btn {
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #e8e8e8;
+        }
+      }
+
+      .actions {
+        display: flex;
+        gap: 12px;
+
+        .download-btn {
+          background: #10b981;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          padding: 10px 20px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s ease;
+
+          &:hover {
+            background: #059669;
+          }
+        }
+
+        .revoke-btn {
+          background: #ef4444;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          padding: 10px 20px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s ease;
+
+          &:hover:not(:disabled) {
+            background: #dc2626;
+          }
+
+          &:disabled {
+            background: #fca5a5;
+            cursor: not-allowed;
+          }
+        }
+      }
+    }
+
+    .info-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+
+      .card-header {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #e5e5e5;
+
+        h1 {
+          margin: 0 0 12px 0;
+          font-size: 28px;
+          font-weight: 500;
+          color: #333;
+        }
+
+        .badges {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+
+          .badge {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+
+          .type-root {
+            background-color: #dbeafe;
+            color: #1e40af;
+          }
+
+          .type-intermediate {
+            background-color: #e9d5ff;
+            color: #7c3aed;
+          }
+
+          .type-end-entity {
+            background-color: #d1fae5;
+            color: #065f46;
+          }
+
+          .status-active {
+            background-color: #d1fae5;
+            color: #065f46;
+          }
+
+          .status-expiring {
+            background-color: #fed7aa;
+            color: #92400e;
+          }
+
+          .status-expired {
+            background-color: #fecaca;
+            color: #991b1b;
+          }
+
+          .status-revoked {
+            background-color: #fecaca;
+            color: #991b1b;
+          }
+        }
+      }
+
+      .card-content {
+        .info-section {
+          margin-bottom: 32px;
+          padding-bottom: 24px;
+          border-bottom: 1px solid #e5e5e5;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #3b82f6;
+          }
+
+          .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+
+            .info-item {
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+
+              .label {
+                font-size: 12px;
+                font-weight: 600;
+                color: #666;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+              }
+
+              .value {
+                font-size: 14px;
+                color: #333;
+                word-break: break-all;
+
+                &.monospace {
+                  font-family: 'Courier New', monospace;
+                  font-size: 13px;
+                }
+
+                &.revoked {
+                  color: #ef4444;
+                  font-weight: 600;
+                }
+              }
+            }
+          }
+
+          .chain-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 6px;
+            font-size: 14px;
+            flex-wrap: wrap;
+
+            .chain-item {
+              font-weight: 600;
+              color: #555;
+
+              &.current {
+                color: #3b82f6;
+              }
+            }
+
+            .chain-arrow {
+              color: #999;
+            }
+          }
+        }
+
+        .pem-section {
+          .pem-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+
+            h3 {
+              margin-bottom: 0;
+            }
+
+            .copy-btn {
+              background: #3b82f6;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              padding: 6px 16px;
+              font-size: 13px;
+              font-weight: 600;
+              cursor: pointer;
+              transition: background 0.2s ease;
+
+              &:hover {
+                background: #2563eb;
+              }
+            }
+          }
+
+          .pem-textarea {
+            width: 100%;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #f9f9f9;
+            resize: vertical;
+            line-height: 1.5;
+            box-sizing: border-box;
+
+            &:focus {
+              outline: none;
+              border-color: #3b82f6;
+              background: white;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Dialog Styles
+  .dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+
+    .dialog {
+      background: white;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+
+      .dialog-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e5e5;
+
+        h2 {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 600;
+          color: #333;
+        }
+
+        .close-btn {
+          background: none;
+          border: none;
+          font-size: 28px;
+          color: #999;
+          cursor: pointer;
+          padding: 0;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 4px;
+          transition: all 0.2s ease;
+
+          &:hover {
+            background: #f5f5f5;
+            color: #666;
+          }
+        }
+      }
+
+      .dialog-content {
+        padding: 24px;
+
+        p {
+          margin: 8px 0;
+          font-size: 14px;
+          color: #555;
+
+          &.warning {
+            color: #ef4444;
+            font-weight: 600;
+            margin-top: 12px;
+          }
+        }
+
+        .form-field {
+          margin-top: 20px;
+
+          label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+          }
+
+          .reason-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+
+            &:focus {
+              outline: none;
+              border-color: #3b82f6;
+            }
+          }
+        }
+      }
+
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 16px 24px;
+        border-top: 1px solid #e5e5e5;
+
+        .cancel-btn {
+          background: #f5f5f5;
+          color: #333;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+          padding: 10px 20px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          &:hover {
+            background: #e8e8e8;
+          }
+        }
+
+        .confirm-revoke-btn {
+          background: #ef4444;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          padding: 10px 20px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s ease;
+
+          &:hover {
+            background: #dc2626;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .certificate-details-container {
+    padding: 16px;
+
+    .details-content {
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+
+        .back-btn {
+          width: 100%;
+        }
+
+        .actions {
+          width: 100%;
+          flex-direction: column;
+
+          button {
+            width: 100%;
+          }
+        }
+      }
+
+      .info-card {
+        .card-content {
+          .info-section {
+            .info-grid {
+              grid-template-columns: 1fr;
+            }
+          }
+        }
+      }
+    }
+
+    .dialog-overlay .dialog {
+      width: 95%;
+      margin: 16px;
+
+      .dialog-actions {
+        flex-direction: column;
+
+        button {
+          width: 100%;
+        }
+      }
+    }
+  }
+}

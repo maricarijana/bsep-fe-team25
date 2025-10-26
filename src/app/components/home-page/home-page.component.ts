@@ -25,4 +25,8 @@ export class HomePageComponent {
       },
     });
   }
+
+  navigateToCertificates(): void {
+    this.router.navigate(['/certificates']);
+  }
 }
