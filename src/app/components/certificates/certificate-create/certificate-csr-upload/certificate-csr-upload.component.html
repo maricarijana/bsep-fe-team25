@@ -1,0 +1,75 @@
+<div class="csr-upload-section">
+  <div class="info-box">
+    <h3>📝 Certificate Signing Request (CSR)</h3>
+    <p>
+      For End Entity certificates, you need to upload a CSR file that you generated locally.
+      This ensures your private key never leaves your machine.
+    </p>
+    <div class="csr-instructions">
+      <strong>How to generate a CSR:</strong>
+      <ol>
+        <li>Generate a private key:
+          <code>openssl genrsa -out private.key 2048</code>
+        </li>
+        <li>Create a CSR:
+          <code>openssl req -new -key private.key -out request.csr</code>
+        </li>
+        <li>Upload the <code>request.csr</code> file below</li>
+      </ol>
+      <p class="warning">
+        ⚠️ <strong>Important:</strong> Keep your <code>private.key</code> safe! Never share it.
+      </p>
+    </div>
+  </div>
+
+  <div class="form-field">
+    <label>Upload CSR File *</label>
+    <div class="file-upload-wrapper">
+      <input
+        type="file"
+        #csrFileInput
+        accept=".csr,.pem"
+        (change)="onCSRFileSelected($event)"
+        class="file-input"
+        id="csr-file-input"
+      />
+      <label for="csr-file-input" class="file-upload-btn">
+        Choose CSR File
+      </label>
+      <span class="file-name" *ngIf="!csrFileName">No file selected</span>
+      <span class="file-name selected" *ngIf="csrFileName">
+        ✅ {{ csrFileName }}
+      </span>
+      <button
+        *ngIf="csrFileName"
+        type="button"
+        class="clear-btn"
+        (click)="clearCSR()"
+      >
+        Clear
+      </button>
+    </div>
+    <div class="error" *ngIf="csrFileError">
+      {{ csrFileError }}
+    </div>
+  </div>
+
+  <!-- Prikaz parsiranih podataka -->
+  <div class="csr-preview" *ngIf="csrPreview">
+    <h4>📋 CSR Preview</h4>
+    <div class="preview-grid">
+      <div class="preview-item" *ngIf="csrPreview.commonName">
+        <span class="preview-label">Common Name:</span>
+        <span class="preview-value">{{ csrPreview.commonName }}</span>
+      </div>
+      <div class="preview-item" *ngIf="csrPreview.organization">
+        <span class="preview-label">Organization:</span>
+        <span class="preview-value">{{ csrPreview.organization }}</span>
+      </div>
+      <div class="preview-item" *ngIf="csrPreview.country">
+        <span class="preview-label">Country:</span>
+        <span class="preview-value">{{ csrPreview.country }}</span>
+      </div>
+    </div>
+  </div>
+</div>

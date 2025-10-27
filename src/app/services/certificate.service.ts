@@ -9,6 +9,13 @@ import { CreateCertificateRequest } from '../model/certificate-request.model';
 })
 export class CertificateService {
   private apiUrl = 'http://localhost:8080/api/pki/certificates';
+   private getHeadersForFormData(): HttpHeaders {
+    const token = localStorage.getItem('jwt');
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+      // NE dodaj Content-Type - browser automatski postavlja multipart/form-data
+    });
+  }
 
   constructor(private http: HttpClient) {}
 
@@ -32,11 +39,23 @@ export class CertificateService {
     });
   }
 
-  createEndEntity(data: CreateCertificateRequest): Observable<Certificate> {
-    return this.http.post<Certificate>(`${this.apiUrl}/end-entity`, data, {
-      headers: this.getHeaders()
-    });
+  createEndEntityFromCSR(
+    csrFile: File,
+    issuerSerialNumber: string,
+    validityYears: number
+  ): Observable<any> {
+    const formData = new FormData();
+    formData.append('csr', csrFile);
+    formData.append('issuerSerialNumber', issuerSerialNumber);
+    formData.append('validityYears', validityYears.toString());
+
+    return this.http.post<any>(
+      `${this.apiUrl}/end-entity/from-csr`,
+      formData,
+      { headers: this.getHeadersForFormData() }
+    );
   }
+
 
   getActiveCAs(): Observable<Certificate[]> {
     return this.http.get<Certificate[]>(`${this.apiUrl}/active-cas`, {

@@ -610,3 +610,125 @@
     }
   }
 }
+.owner-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .owner-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+
+    &:hover {
+      border-color: #3b82f6;
+      background: #f5f9ff;
+    }
+
+    &.active {
+      border-color: #3b82f6;
+      background: #e3f2fd;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+    }
+
+    .owner-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+
+      strong {
+        font-size: 16px;
+        color: #212121;
+      }
+    }
+
+    .owner-role {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+
+      &.admin {
+        background: #ff9800;
+        color: white;
+      }
+
+      &.ca-user {
+        background: #4caf50;
+        color: white;
+      }
+    }
+
+    .owner-email {
+      font-size: 14px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .owner-org {
+      font-size: 13px;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    .owner-info {
+      font-size: 13px;
+      color: #666;
+      font-style: italic;
+      margin-top: 4px;
+    }
+  }
+
+  .hint.info {
+    background: #e3f2fd;
+    padding: 8px 12px;
+    border-radius: 4px;
+    color: #1565c0;
+    border: 1px solid #90caf9;
+    font-style: normal;
+    font-size: 14px;
+    margin-bottom: 12px;
+
+    strong {
+      font-weight: 600;
+      color: #0d47a1;
+    }
+  }
+
+  // ✅✅✅ KRAJ OWNER STILOVA ✅✅✅
+
+// Responsive Design
+@media (max-width: 768px) {
+  // ... existing responsive styles ...
+  
+  // ✅ DODAJ OVO u @media (max-width: 768px) blok:
+  .certificate-create-container {
+    // ... existing styles ...
+    
+    .owner-btn {
+      padding: 12px;
+      
+      .owner-header strong {
+        font-size: 14px;
+      }
+      
+      .owner-email,
+      .owner-org,
+      .owner-info {
+        font-size: 12px;
+      }
+    }
+  }
+}
