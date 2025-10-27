@@ -1,0 +1,147 @@
+.csr-upload-section {
+  .info-box {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+
+    h3 {
+      margin: 0 0 12px 0;
+      color: #495057;
+    }
+
+    p {
+      margin: 0 0 16px 0;
+      color: #6c757d;
+    }
+
+    .csr-instructions {
+      background: white;
+      padding: 16px;
+      border-radius: 4px;
+
+      strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #212529;
+      }
+
+      ol {
+        margin: 8px 0;
+        padding-left: 20px;
+
+        li {
+          margin: 8px 0;
+          color: #495057;
+
+          code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+          }
+        }
+      }
+
+      .warning {
+        margin-top: 12px;
+        padding: 12px;
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        border-radius: 4px;
+        color: #856404;
+      }
+    }
+  }
+
+  .file-upload-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .file-input {
+      display: none;
+    }
+
+    .file-upload-btn {
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+
+      &:hover {
+        background: #0056b3;
+      }
+    }
+
+    .file-name {
+      flex: 1;
+      color: #6c757d;
+      font-size: 0.9em;
+
+      &.selected {
+        color: #28a745;
+        font-weight: 500;
+      }
+    }
+
+    .clear-btn {
+      padding: 6px 12px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85em;
+
+      &:hover {
+        background: #c82333;
+      }
+    }
+  }
+
+  .error {
+    margin-top: 8px;
+    color: #dc3545;
+    font-size: 0.9em;
+  }
+
+  .csr-preview {
+    margin-top: 16px;
+    padding: 16px;
+    background: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 6px;
+
+    h4 {
+      margin: 0 0 12px 0;
+      color: #004085;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+
+      .preview-item {
+        display: flex;
+        flex-direction: column;
+
+        .preview-label {
+          font-size: 0.85em;
+          color: #6c757d;
+          margin-bottom: 4px;
+        }
+
+        .preview-value {
+          font-weight: 500;
+          color: #212529;
+        }
+      }
+    }
+  }
+}

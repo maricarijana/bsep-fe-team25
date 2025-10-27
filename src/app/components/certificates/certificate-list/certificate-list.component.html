@@ -1,7 +1,7 @@
 <div class="certificate-list-container">
   <div class="header">
     <h1>Certificates</h1>
-    <button class="create-btn" (click)="createNew()">
+    <button class="create-btn" (click)="createNew()" *ngIf="isAdmin() || isCAUser()">
       Create New Certificate
     </button>
   </div>

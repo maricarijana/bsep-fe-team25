@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CertificateService } from '../../../services/certificate.service';
 import { Certificate } from '../../../model/certificate.model';
-
+import { AuthService } from '../../../services/auth.service'; 
 @Component({
   selector: 'app-certificate-list',
   standalone: true,
@@ -27,6 +27,7 @@ export class CertificateListComponent implements OnInit {
 
   constructor(
     private certificateService: CertificateService,
+    private authService: AuthService,
     private router: Router,
     private snackBar: MatSnackBar
   ) {}
@@ -35,9 +36,16 @@ export class CertificateListComponent implements OnInit {
     this.loadCertificates();
   }
 
-  loadCertificates(): void {
+loadCertificates(): void {
     this.loading = true;
-    this.certificateService.getMyCertificates().subscribe({
+    
+    // ✅ IZMENI - Admin vidi SVE, ostali samo svoje
+    const isAdmin = this.authService.isAdmin();
+    const apiCall = isAdmin 
+      ? this.certificateService.getAllCertificates()  // Admin → /all
+      : this.certificateService.getMyCertificates();  // CA_USER/END_USER → /my
+    
+    apiCall.subscribe({
       next: (data) => {
         this.certificates = data;
         this.applyFilters();
@@ -49,7 +57,6 @@ export class CertificateListComponent implements OnInit {
       }
     });
   }
-
   applyFilters(): void {
     let filtered = [...this.certificates];
 
@@ -128,5 +135,13 @@ export class CertificateListComponent implements OnInit {
   selectType(type: string): void {
     this.selectedType = type;
     this.applyFilters();
+  }
+
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
+  isCAUser(): boolean {
+    return this.authService.getUserRole() === 'CA_USER';
   }
 }

@@ -2,9 +2,9 @@
   <div class="header-content">
     <a routerLink="/home" class="logo">BSEP Sistem</a>
 
-    <nav class="nav-links" *ngIf="isAdmin()">
+    <nav class="nav-links" *ngIf="isAdmin() || isCAUser()">
       <a routerLink="/certificates" class="nav-link">Certificates</a>
-      <a routerLink="/admin/ca-users" class="nav-link admin-link">Admin Panel</a>
+      <a routerLink="/admin/ca-users" class="nav-link admin-link" *ngIf="isAdmin()">Admin Panel</a>
     </nav>
 
     <div class="header-actions">

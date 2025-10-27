@@ -21,6 +21,10 @@ export class HeaderComponent {
     return this.authService.isAdmin();
   }
 
+  isCAUser(): boolean {
+    return this.authService.getUserRole() === 'CA_USER';
+  }
+
   logout(): void {
     this.authService.logout().subscribe({
       next: () => {
