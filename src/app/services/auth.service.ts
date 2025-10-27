@@ -73,6 +73,22 @@ export class AuthService {
     return this.getUserRole() === 'ADMIN';
   }
 
+  /**
+   * Decode JWT token and extract user email
+   */
+  getUserEmail(): string | null {
+    const token = localStorage.getItem('jwt');
+    if (!token) return null;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.sub || payload.email || null;
+    } catch (e) {
+      console.error('Failed to decode JWT token', e);
+      return null;
+    }
+  }
+
   clearLocalAuth(): void {
     localStorage.removeItem('jwt');
     localStorage.removeItem('userRole');

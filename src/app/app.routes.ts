@@ -16,12 +16,21 @@ import {
   mustChangePasswordGuard,
 } from './guards/change-password.guard';
 import { adminGuard } from './guards/admin.guard';
+import { CrlViewerComponent } from './components/crl-viewer/crl-viewer.component';
+import { TemplateListComponent } from './components/certificates/templates/template-list/template-list.component';
+import { TemplateCreateComponent } from './components/certificates/templates/template-create/template-create.component';
+import { TemplateDetailsComponent } from './components/certificates/templates/template-details/template-details.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password/:token', component: ResetPasswordComponent },
+  {
+    path: 'crl-viewer',
+    component: CrlViewerComponent,
+    canActivate: [authGuard, mustChangePasswordGuard],
+  },
   // Ruta za obaveznu promjenu lozinke
   {
     path: 'change-password',
@@ -45,6 +54,9 @@ export const routes: Routes = [
     children: [
       { path: '', component: CertificateListComponent },
       { path: 'create', component: CertificateCreateComponent },
+      { path: 'templates', component: TemplateListComponent },
+      { path: 'templates/create', component: TemplateCreateComponent },
+      { path: 'templates/:name', component: TemplateDetailsComponent },
       { path: ':serialNumber', component: CertificateDetailsComponent },
     ],
   },

@@ -48,7 +48,7 @@
     <section class="form-section">
       <h2>Basic Information</h2>
 
-       <app-certificate-csr-upload
+      <app-certificate-csr-upload
         *ngIf="selectedType === 'END_ENTITY'"
         (csrSelected)="onCSRSelected($event)"
         (csrCleared)="onCSRCleared()"
@@ -79,8 +79,16 @@
             formControlName="organization"
             placeholder="e.g., My Company Inc."
           />
-          <p class="hint info" *ngIf="!isCurrentUserAdmin && certificateForm.get('organization')?.disabled">
-            🔒 Locked to your organization: <strong>{{ userOrganization }}</strong><br>
+          <p
+            class="hint info"
+            *ngIf="
+              !isCurrentUserAdmin &&
+              certificateForm.get('organization')?.disabled
+            "
+          >
+            🔒 Locked to your organization:
+            <strong>{{ userOrganization }}</strong
+            ><br />
             CA users can only issue certificates for their own organization.
           </p>
           <div
@@ -266,58 +274,134 @@
         </div>
       </div>
     </section>
-      <section class="form-section" 
-          *ngIf="selectedType === 'INTERMEDIATE_CA' && isCurrentUserAdmin">
-    <h2>Certificate Owner</h2>
-    <div class="form-field">
-      <label>Assign to CA User (optional)</label>
-      
+
+    <!-- Template Selection (optional) -->
+    <section
+      class="form-section"
+      *ngIf="
+        selectedType === 'END_ENTITY' &&
+        certificateForm.get('issuerSerialNumber')?.value
+      "
+    >
+      <h2>Certificate Template (Optional)</h2>
       <p class="hint info">
-        ℹ️ If no owner is selected, the certificate will be assigned to you.
+        ℹ️ Templates provide pre-configured settings and validation rules
       </p>
 
-      <!-- CA korisnici lista -->
-      <div class="owner-list" *ngIf="caUsers.length > 0">
-        <!-- Opcija: Admin za sebe (default) -->
+      <div class="template-list" *ngIf="availableTemplates.length > 0">
         <button
           type="button"
-          class="owner-btn"
-          [class.active]="certificateForm.get('ownerId')?.value === null"
-          (click)="selectOwner(null)">
-          <div class="owner-header">
-            <strong>Yourself (Admin)</strong>
-            <span class="owner-role admin">ADMIN</span>
+          class="template-btn"
+          [class.active]="
+            certificateForm.get('templateName')?.value === template.name
+          "
+          (click)="selectTemplate(template)"
+          *ngFor="let template of availableTemplates"
+        >
+          <div class="template-info">
+            <strong>{{ template.name }}</strong>
+            <span class="template-detail"
+              >Max TTL: {{ template.maxTTLDays }} days</span
+            >
+            <span class="template-regex" [title]="template.cnValidationRegex">
+              CN: {{ template.cnValidationRegex.substring(0, 40)
+              }}{{ template.cnValidationRegex.length > 40 ? "..." : "" }}
+            </span>
           </div>
-          <span class="owner-info">Certificate will be owned by you</span>
-        </button>
-
-        <!-- Opcije: CA korisnici -->
-        <button
-          *ngFor="let user of caUsers"
-          type="button"
-          class="owner-btn"
-          [class.active]="certificateForm.get('ownerId')?.value === user.id"
-          (click)="selectOwner(user.id)">
-          <div class="owner-header">
-           <strong>{{ user.fullName }}</strong>
-            <span class="owner-role ca-user">CA_USER</span>
-          </div>
-          <span class="owner-email">{{ user.email }}</span>
-          <span class="owner-org" *ngIf="user.organization">
-            {{ user.organization }}
-          </span>
         </button>
       </div>
 
-      <!-- Ako nema CA korisnika -->
-      <div class="warning" *ngIf="caUsers.length === 0">
-        <p><strong>⚠️ No CA users found</strong></p>
-        <p>The certificate will be assigned to you by default.</p>
+      <div class="template-empty" *ngIf="availableTemplates.length === 0">
+        <p>No templates available for this CA issuer</p>
+        <button
+          type="button"
+          class="link-btn"
+          routerLink="/certificates/templates/create"
+        >
+          Create Template
+        </button>
       </div>
-    </div>
-  </section>
-  <!-- ✅✅✅ KRAJ NOVOG KODA ✅✅✅ -->
 
+      <button
+        type="button"
+        class="link-btn clear-template-btn"
+        (click)="clearTemplate()"
+        *ngIf="certificateForm.get('templateName')?.value"
+      >
+        Clear Template
+      </button>
+
+      <!-- Template Hints -->
+      <div class="template-hints" *ngIf="selectedTemplate">
+        <div class="hint-box">
+          <strong>📝 Template Constraints:</strong>
+          <ul>
+            <li>
+              Max validity: {{ selectedTemplate.maxTTLDays }} days (≈
+              {{ selectedTemplate.maxTTLDays / 365 | number : "1.0-0" }} years)
+            </li>
+            <li *ngIf="templateCNHint">{{ templateCNHint }}</li>
+            <li *ngIf="templateSANHint">{{ templateSANHint }}</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="form-section"
+      *ngIf="selectedType === 'INTERMEDIATE_CA' && isCurrentUserAdmin"
+    >
+      <h2>Certificate Owner</h2>
+      <div class="form-field">
+        <label>Assign to CA User (optional)</label>
+
+        <p class="hint info">
+          ℹ️ If no owner is selected, the certificate will be assigned to you.
+        </p>
+
+        <!-- CA korisnici lista -->
+        <div class="owner-list" *ngIf="caUsers.length > 0">
+          <!-- Opcija: Admin za sebe (default) -->
+          <button
+            type="button"
+            class="owner-btn"
+            [class.active]="certificateForm.get('ownerId')?.value === null"
+            (click)="selectOwner(null)"
+          >
+            <div class="owner-header">
+              <strong>Yourself (Admin)</strong>
+              <span class="owner-role admin">ADMIN</span>
+            </div>
+            <span class="owner-info">Certificate will be owned by you</span>
+          </button>
+
+          <!-- Opcije: CA korisnici -->
+          <button
+            *ngFor="let user of caUsers"
+            type="button"
+            class="owner-btn"
+            [class.active]="certificateForm.get('ownerId')?.value === user.id"
+            (click)="selectOwner(user.id)"
+          >
+            <div class="owner-header">
+              <strong>{{ user.fullName }}</strong>
+              <span class="owner-role ca-user">CA_USER</span>
+            </div>
+            <span class="owner-email">{{ user.email }}</span>
+            <span class="owner-org" *ngIf="user.organization">
+              {{ user.organization }}
+            </span>
+          </button>
+        </div>
+
+        <!-- Ako nema CA korisnika -->
+        <div class="warning" *ngIf="caUsers.length === 0">
+          <p><strong>⚠️ No CA users found</strong></p>
+          <p>The certificate will be assigned to you by default.</p>
+        </div>
+      </div>
+    </section>
+    <!-- ✅✅✅ KRAJ NOVOG KODA ✅✅✅ -->
 
     <!-- Extensions (for non-ROOT_CA) -->
     <section class="form-section" *ngIf="selectedType !== 'ROOT_CA'">
