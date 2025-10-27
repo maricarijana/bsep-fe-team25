@@ -1,0 +1,212 @@
+// src/app/password-manager/private-key-upload/private-key-upload.component.scss
+
+.private-key-upload {
+  .info-box {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+
+    h3 {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #495057;
+    }
+
+    p {
+      margin: 0 0 16px 0;
+      color: #6c757d;
+      font-size: 14px;
+      line-height: 1.6;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    .warning-box {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      border-radius: 4px;
+      padding: 12px;
+      margin-top: 12px;
+
+      p {
+        margin: 0 0 8px 0;
+        color: #856404;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      ul {
+        margin: 8px 0 0 0;
+        padding-left: 20px;
+        color: #856404;
+        font-size: 13px;
+
+        li {
+          margin: 6px 0;
+          line-height: 1.5;
+
+          strong {
+            font-weight: 600;
+          }
+        }
+      }
+    }
+  }
+
+  .file-upload-section {
+    .file-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .file-upload-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+
+      .file-input {
+        display: none;
+      }
+
+      .file-upload-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background: #3b82f6;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        border: none;
+
+        &:hover {
+          background: #2563eb;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        &:active {
+          transform: scale(0.98);
+        }
+      }
+
+      .file-name {
+        flex: 1;
+        color: #6c757d;
+        font-size: 14px;
+        min-width: 150px;
+
+        &.loading {
+          color: #3b82f6;
+          font-style: italic;
+        }
+
+        &.selected {
+          color: #10b981;
+          font-weight: 600;
+        }
+      }
+
+      .clear-btn {
+        padding: 8px 16px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #dc2626;
+        }
+
+        &:active {
+          transform: scale(0.95);
+        }
+      }
+    }
+
+    .error {
+      margin-top: 12px;
+      padding: 12px;
+      background: #fee;
+      border: 1px solid #fcc;
+      border-radius: 6px;
+      color: #c00;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .success-message {
+      margin-top: 12px;
+      padding: 12px;
+      background: #d1fae5;
+      border: 1px solid #6ee7b7;
+      border-radius: 6px;
+      color: #065f46;
+      font-size: 14px;
+      font-weight: 600;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .private-key-upload {
+    .info-box {
+      padding: 16px;
+
+      h3 {
+        font-size: 16px;
+      }
+    }
+
+    .file-upload-section {
+      .file-upload-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+
+        .file-upload-btn {
+          width: 100%;
+          text-align: center;
+        }
+
+        .file-name {
+          text-align: center;
+        }
+
+        .clear-btn {
+          width: 100%;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .private-key-upload {
+    .info-box {
+      padding: 12px;
+
+      h3 {
+        font-size: 15px;
+      }
+
+      p, ul li {
+        font-size: 13px;
+      }
+    }
+  }
+}

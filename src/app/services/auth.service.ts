@@ -72,6 +72,9 @@ export class AuthService {
   isAdmin(): boolean {
     return this.getUserRole() === 'ADMIN';
   }
+  isCAUser(): boolean {
+  return this.getUserRole() === 'CA_USER';
+}
 
   clearLocalAuth(): void {
     localStorage.removeItem('jwt');
