@@ -14,4 +14,5 @@ export interface CreateCertificateRequest {
   extendedKeyUsage?: string[];
   subjectAlternativeNames?: string[];
   ownerId?: number;
+  templateName?: string;
 }

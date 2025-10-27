@@ -42,12 +42,17 @@ export class CertificateService {
   createEndEntityFromCSR(
     csrFile: File,
     issuerSerialNumber: string,
-    validityYears: number
+    validityYears: number,
+    templateName?: string | null
   ): Observable<any> {
     const formData = new FormData();
     formData.append('csr', csrFile);
     formData.append('issuerSerialNumber', issuerSerialNumber);
     formData.append('validityYears', validityYears.toString());
+
+    if (templateName) {
+      formData.append('templateName', templateName);
+    }
 
     return this.http.post<any>(
       `${this.apiUrl}/end-entity/from-csr`,

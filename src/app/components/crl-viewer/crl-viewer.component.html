@@ -1,0 +1,102 @@
+<div class="crl-viewer">
+  <div class="header">
+    <h2>Certificate Revocation List (CRL)</h2>
+    <p class="subtitle">View and manage revoked certificates</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading">
+    <div class="spinner"></div>
+    <p>Loading CRL information...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="error-message">
+    <span class="error-icon">⚠️</span>
+    <p>{{ error() }}</p>
+    <button (click)="loadCRLInfo()" class="btn-retry">Retry</button>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!loading() && !error() && crlInfo()">
+    <!-- Actions Bar -->
+    <div class="actions-bar">
+      <div class="actions-left">
+        <button (click)="loadCRLInfo()" class="btn btn-primary">
+          🔄 Refresh
+        </button>
+        <button (click)="downloadCRL()" class="btn btn-secondary">
+          📥 Download CRL File
+        </button>
+      </div>
+
+      <div class="search-box">
+        <input
+          type="text"
+          placeholder="Search by serial, CN, or reason..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="searchTerm.set($event)"
+          class="search-input"
+        />
+      </div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="summary-card">
+      <div class="summary-item">
+        <span class="summary-label">Total Revoked</span>
+        <span class="summary-value">{{ crlInfo()?.totalRevoked }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Filtered Results</span>
+        <span class="summary-value">{{ filteredCertificates.length }}</span>
+      </div>
+    </div>
+
+    <!-- Revoked Certificates Table -->
+    <div class="table-container">
+      <table *ngIf="filteredCertificates.length > 0; else noCertificates">
+        <thead>
+          <tr>
+            <th>Serial Number</th>
+            <th>Common Name</th>
+            <th>Revoked At</th>
+            <th>Reason</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let cert of filteredCertificates">
+            <td class="serial-number">
+              <code>{{ cert.serialNumber }}</code>
+            </td>
+            <td>{{ cert.commonName }}</td>
+            <td>{{ formatDate(cert.revokedAt) }}</td>
+            <td>
+              <span [class]="'badge ' + getReasonClass(cert.reason)">
+                {{ cert.reason }}
+              </span>
+            </td>
+            <td>
+              <button
+                (click)="checkCertificate(cert.serialNumber)"
+                class="btn-check"
+                title="Verify revocation status"
+              >
+                🔍 Check
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <ng-template #noCertificates>
+        <div class="empty-state">
+          <div class="empty-icon">✓</div>
+          <h3>No Revoked Certificates</h3>
+          <p>All certificates are currently valid.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

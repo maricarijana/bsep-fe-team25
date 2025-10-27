@@ -1,0 +1,214 @@
+<div class="container">
+  <div class="loading-spinner" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading template...</p>
+  </div>
+
+  <div *ngIf="!loading && template" class="details-content">
+    <div class="header">
+      <button class="back-btn" (click)="goBack()">← Back to Templates</button>
+
+      <div class="actions">
+        <button class="use-btn" (click)="useTemplate()">
+          Use Template
+        </button>
+        <button
+          class="delete-btn"
+          (click)="toggleDeleteDialog()"
+          *ngIf="canDeleteTemplate()"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="card-header">
+        <h1>{{ template.name }}</h1>
+        <div class="badges">
+          <span class="badge badge-template">Template</span>
+        </div>
+      </div>
+
+      <div class="card-content">
+        <!-- Template Information -->
+        <div class="info-section">
+          <h3>Template Information</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Template Name:</span>
+              <span class="value">{{ template.name }}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="label">CA Issuer:</span>
+              <span class="value">{{ template.caIssuerCommonName }}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="label">CA Issuer Serial:</span>
+              <span class="value monospace">{{ template.caIssuerSerialNumber }}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="label">Maximum TTL:</span>
+              <span class="value">{{ template.maxTTLDays }} days</span>
+            </div>
+
+            <div class="info-item">
+              <span class="label">Created By:</span>
+              <span class="value">{{ template.createdByEmail }}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="label">Created At:</span>
+              <span class="value">{{ template.createdAt | date:'medium' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Validation Rules -->
+        <div class="info-section">
+          <h3>Validation Rules</h3>
+
+          <div class="info-item full-width">
+            <span class="label">Common Name (CN) Regex:</span>
+            <div class="regex-display">
+              <code>{{ template.cnValidationRegex }}</code>
+              <button class="copy-btn" (click)="copyRegex(template.cnValidationRegex)" title="Copy to clipboard">
+                📋
+              </button>
+            </div>
+          </div>
+
+          <div class="info-item full-width" *ngIf="template.sanValidationRegex">
+            <span class="label">Subject Alternative Name (SAN) Regex:</span>
+            <div class="regex-display">
+              <code>{{ template.sanValidationRegex }}</code>
+              <button class="copy-btn" (click)="copyRegex(template.sanValidationRegex)" title="Copy to clipboard">
+                📋
+              </button>
+            </div>
+          </div>
+
+          <div class="info-item full-width" *ngIf="!template.sanValidationRegex">
+            <span class="label">Subject Alternative Name (SAN) Regex:</span>
+            <span class="value muted">Not configured</span>
+          </div>
+        </div>
+
+        <!-- Test Regex Section -->
+        <div class="info-section test-section">
+          <h3>Test Validation Rules</h3>
+          <p class="hint">Try testing values against the validation patterns</p>
+
+          <!-- Test CN -->
+          <div class="test-field">
+            <label>Test Common Name (CN)</label>
+            <div class="test-input-group">
+              <input
+                type="text"
+                [value]="testCN"
+                (input)="testCN = $any($event.target).value; validateTestCN()"
+                placeholder="e.g., webserver.ftn.com"
+              />
+              <span class="validation-icon" *ngIf="testCN">
+                {{ cnValid ? '✅' : '❌' }}
+              </span>
+            </div>
+            <p class="validation-message" *ngIf="testCN">
+              <span *ngIf="cnValid" class="success">✓ Valid - Matches CN pattern</span>
+              <span *ngIf="!cnValid" class="error">✗ Invalid - Does not match CN pattern</span>
+            </p>
+          </div>
+
+          <!-- Test SAN -->
+          <div class="test-field" *ngIf="template.sanValidationRegex">
+            <label>Test Subject Alternative Name (SAN)</label>
+            <div class="test-input-group">
+              <input
+                type="text"
+                [value]="testSAN"
+                (input)="testSAN = $any($event.target).value; validateTestSAN()"
+                placeholder="e.g., api.ftn.com"
+              />
+              <span class="validation-icon" *ngIf="testSAN">
+                {{ sanValid ? '✅' : '❌' }}
+              </span>
+            </div>
+            <p class="validation-message" *ngIf="testSAN">
+              <span *ngIf="sanValid" class="success">✓ Valid - Matches SAN pattern</span>
+              <span *ngIf="!sanValid" class="error">✗ Invalid - Does not match SAN pattern</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Certificate Extensions -->
+        <div class="info-section">
+          <h3>Certificate Extensions</h3>
+
+          <!-- Key Usage -->
+          <div class="info-item full-width">
+            <span class="label">Key Usage:</span>
+            <div class="badge-list" *ngIf="template.keyUsage.length > 0">
+              <span class="badge badge-usage" *ngFor="let usage of template.keyUsage">
+                {{ formatLabel(usage) }}
+              </span>
+            </div>
+            <span class="value muted" *ngIf="template.keyUsage.length === 0">
+              None configured
+            </span>
+          </div>
+
+          <!-- Extended Key Usage -->
+          <div class="info-item full-width">
+            <span class="label">Extended Key Usage:</span>
+            <div class="badge-list" *ngIf="template.extendedKeyUsage.length > 0">
+              <span class="badge badge-extended" *ngFor="let usage of template.extendedKeyUsage">
+                {{ formatLabel(usage) }}
+              </span>
+            </div>
+            <span class="value muted" *ngIf="template.extendedKeyUsage.length === 0">
+              None configured
+            </span>
+          </div>
+        </div>
+
+        <!-- Usage Instructions -->
+        <div class="info-section usage-info">
+          <h3>How to Use This Template</h3>
+          <ol>
+            <li>Click the "Use Template" button above to create a certificate with this template</li>
+            <li>The certificate creation form will be pre-filled with template settings</li>
+            <li>Your certificate request will be validated against the template rules</li>
+            <li>Certificate validity period cannot exceed {{ template.maxTTLDays }} days</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Dialog -->
+  <div class="dialog-overlay" *ngIf="showDeleteDialog" (click)="toggleDeleteDialog()">
+    <div class="dialog" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>Delete Template</h2>
+      </div>
+
+      <div class="dialog-content">
+        <p>Are you sure you want to delete this template?</p>
+        <p><strong>Template Name:</strong> {{ template?.name }}</p>
+        <p class="warning-text">
+          ⚠️ This action cannot be undone. Certificates already issued with this template will not be affected.
+        </p>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="cancel-btn" (click)="toggleDeleteDialog()">Cancel</button>
+        <button class="confirm-delete-btn" (click)="confirmDelete()">
+          Delete Template
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -5,16 +5,17 @@
 
   <div *ngIf="!loading && certificate" class="details-content">
     <div class="header">
-      <button class="back-btn" (click)="goBack()">
-        ← Back to List
-      </button>
+      <button class="back-btn" (click)="goBack()">← Back to List</button>
 
       <div class="actions">
         <button class="download-btn" (click)="downloadPEM()">
           Download PEM
         </button>
-        <button class="revoke-btn" (click)="toggleRevokeDialog()"
-                [disabled]="certificate.isRevoked">
+        <button
+          class="revoke-btn"
+          (click)="toggleRevokeDialog()"
+          [disabled]="certificate.isRevoked"
+        >
           Revoke
         </button>
       </div>
@@ -25,11 +26,32 @@
         <h1>{{ certificate.commonName }}</h1>
         <div class="badges">
           <span class="badge" [ngClass]="getTypeClass()">
-            {{ certificate.certificateType.replace('_', ' ') }}
+            {{ certificate.certificateType.replace("_", " ") }}
           </span>
           <span class="badge" [ngClass]="getStatusInfo().class">
             {{ getStatusInfo().label }}
           </span>
+        </div>
+      </div>
+
+      <div class="crl-status" *ngIf="isRevoked() !== null">
+        <div
+          class="crl-badge"
+          [ngClass]="isRevoked() ? 'crl-revoked' : 'crl-valid'"
+        >
+          <span class="crl-icon">{{ isRevoked() ? "❌" : "✅" }}</span>
+          <span class="crl-text">
+            CRL Status: {{ isRevoked() ? "REVOKED" : "VALID" }}
+          </span>
+          <button
+            class="crl-refresh"
+            (click)="checkRevocationStatus(certificate.serialNumber)"
+            [disabled]="checkingRevocation()"
+            title="Refresh CRL status"
+          >
+            <span *ngIf="!checkingRevocation()">🔄</span>
+            <span *ngIf="checkingRevocation()" class="spinner-mini"></span>
+          </button>
         </div>
       </div>
 
@@ -39,32 +61,44 @@
           <div class="info-grid">
             <div class="info-item">
               <span class="label">Serial Number:</span>
-              <span class="value monospace">{{ certificate.serialNumber }}</span>
+              <span class="value monospace">{{
+                certificate.serialNumber
+              }}</span>
             </div>
 
             <div class="info-item">
               <span class="label">Certificate Type:</span>
-              <span class="value">{{ certificate.certificateType.replace('_', ' ') }}</span>
+              <span class="value">{{
+                certificate.certificateType.replace("_", " ")
+              }}</span>
             </div>
 
             <div class="info-item">
               <span class="label">Created:</span>
-              <span class="value">{{ certificate.createdAt | date: 'medium' }}</span>
+              <span class="value">{{
+                certificate.createdAt | date : "medium"
+              }}</span>
             </div>
 
             <div class="info-item">
               <span class="label">Valid From:</span>
-              <span class="value">{{ certificate.validFrom | date: 'medium' }}</span>
+              <span class="value">{{
+                certificate.validFrom | date : "medium"
+              }}</span>
             </div>
 
             <div class="info-item">
               <span class="label">Valid Until:</span>
-              <span class="value">{{ certificate.validUntil | date: 'medium' }}</span>
+              <span class="value">{{
+                certificate.validUntil | date : "medium"
+              }}</span>
             </div>
 
             <div class="info-item" *ngIf="certificate.isRevoked">
               <span class="label">Revocation Reason:</span>
-              <span class="value revoked">{{ certificate.revocationReason }}</span>
+              <span class="value revoked">{{
+                certificate.revocationReason
+              }}</span>
             </div>
           </div>
         </div>
@@ -99,7 +133,9 @@
 
             <div class="info-item">
               <span class="label">Issuer Serial:</span>
-              <span class="value monospace">{{ certificate.issuerSerialNumber }}</span>
+              <span class="value monospace">{{
+                certificate.issuerSerialNumber
+              }}</span>
             </div>
           </div>
 
@@ -131,7 +167,11 @@
         <div class="info-section pem-section">
           <div class="pem-header">
             <h3>PEM Certificate</h3>
-            <button class="copy-btn" (click)="copyPEM()" title="Copy to clipboard">
+            <button
+              class="copy-btn"
+              (click)="copyPEM()"
+              title="Copy to clipboard"
+            >
               Copy
             </button>
           </div>
@@ -140,7 +180,8 @@
             class="pem-textarea"
             readonly
             [value]="certificate.pemCertificate"
-            rows="15">
+            rows="15"
+          >
           </textarea>
         </div>
       </div>
@@ -148,7 +189,11 @@
   </div>
 
   <!-- Revoke Dialog -->
-  <div class="dialog-overlay" *ngIf="showRevokeDialog" (click)="toggleRevokeDialog()">
+  <div
+    class="dialog-overlay"
+    *ngIf="showRevokeDialog"
+    (click)="toggleRevokeDialog()"
+  >
     <div class="dialog" (click)="$event.stopPropagation()">
       <div class="dialog-header">
         <h2>Revoke Certificate</h2>
@@ -174,8 +219,12 @@
       </div>
 
       <div class="dialog-actions">
-        <button class="cancel-btn" (click)="toggleRevokeDialog()">Cancel</button>
-        <button class="confirm-revoke-btn" (click)="confirmRevoke()">Revoke</button>
+        <button class="cancel-btn" (click)="toggleRevokeDialog()">
+          Cancel
+        </button>
+        <button class="confirm-revoke-btn" (click)="confirmRevoke()">
+          Revoke
+        </button>
       </div>
     </div>
   </div>

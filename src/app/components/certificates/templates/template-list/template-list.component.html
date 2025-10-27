@@ -1,0 +1,106 @@
+<div class="container">
+  <div class="header">
+    <h1>Certificate Templates</h1>
+    <button class="create-btn" (click)="createNew()" *ngIf="canCreateTemplate()">
+      Create Template
+    </button>
+  </div>
+
+  <div class="filters">
+    <div class="search-field">
+      <input
+        type="text"
+        [(ngModel)]="searchText"
+        (ngModelChange)="onSearchChange()"
+        placeholder="Search by template name, CA issuer, or creator email"
+        class="search-input"
+      />
+    </div>
+
+    <div class="type-filter" *ngIf="uniqueIssuers.length > 1">
+      <button
+        class="filter-btn"
+        [class.active]="selectedIssuer === 'ALL'"
+        (click)="selectIssuer('ALL')"
+      >
+        All Issuers
+      </button>
+      <button
+        class="filter-btn"
+        [class.active]="selectedIssuer === issuer.serial"
+        (click)="selectIssuer(issuer.serial)"
+        *ngFor="let issuer of uniqueIssuers"
+      >
+        {{ issuer.name }}
+      </button>
+    </div>
+  </div>
+
+  <div class="table-container" *ngIf="!loading">
+    <table class="templates-table" *ngIf="filteredTemplates.length > 0">
+      <thead>
+        <tr>
+          <th>Template Name</th>
+          <th>CA Issuer</th>
+          <th>CN Regex</th>
+          <th>Max TTL (Days)</th>
+          <th>Created By</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let template of filteredTemplates" (click)="viewDetails(template.name)" class="clickable-row">
+          <td>
+            <strong class="template-name">{{ template.name }}</strong>
+          </td>
+          <td>
+            <div class="issuer-cell">
+              <span class="issuer-name">{{ template.caIssuerCommonName }}</span>
+              <span class="issuer-serial" [title]="template.caIssuerSerialNumber">
+                {{ template.caIssuerSerialNumber.substring(0, 12) }}...
+              </span>
+            </div>
+          </td>
+          <td>
+            <code class="regex-preview">{{ template.cnValidationRegex }}</code>
+          </td>
+          <td>
+            <span class="ttl-value">{{ template.maxTTLDays }}</span>
+          </td>
+          <td>
+            <span class="creator-email">{{ template.createdByEmail }}</span>
+          </td>
+          <td class="actions" (click)="$event.stopPropagation()">
+            <button
+              class="action-btn view-btn"
+              (click)="viewDetails(template.name)"
+              title="View Details"
+            >
+              View
+            </button>
+            <button
+              class="action-btn delete-btn"
+              (click)="deleteTemplate(template, $event)"
+              *ngIf="canDeleteTemplate(template)"
+              title="Delete Template"
+            >
+              Delete
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="no-data" *ngIf="filteredTemplates.length === 0">
+      <p>No templates found</p>
+      <button class="create-btn" (click)="createNew()" *ngIf="canCreateTemplate()">
+        Create Your First Template
+      </button>
+    </div>
+  </div>
+
+  <div class="loading-spinner" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading templates...</p>
+  </div>
+</div>

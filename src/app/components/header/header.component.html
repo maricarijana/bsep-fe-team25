@@ -4,7 +4,26 @@
 
     <nav class="nav-links" *ngIf="isAdmin() || isCAUser()">
       <a routerLink="/certificates" class="nav-link">Certificates</a>
-      <a routerLink="/admin/ca-users" class="nav-link admin-link" *ngIf="isAdmin()">Admin Panel</a>
+      <a
+        routerLink="/admin/ca-users"
+        class="nav-link admin-link"
+        *ngIf="isAdmin()"
+        >Admin Panel</a
+      >
+      <a
+        routerLink="/crl-viewer"
+        routerLinkActive="active"
+        *ngIf="isAdmin() || isCAUser()"
+      >
+        🔍 CRL Viewer
+      </a>
+      <a
+        routerLink="/certificates/templates"
+        routerLinkActive="active"
+        *ngIf="isAdmin() || isCAUser()"
+      >
+        Templates
+      </a>
     </nav>
 
     <div class="header-actions">

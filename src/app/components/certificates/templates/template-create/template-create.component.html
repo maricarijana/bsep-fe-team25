@@ -1,0 +1,289 @@
+<div class="container">
+  <div class="header">
+    <h1>Create Certificate Template</h1>
+    <button class="cancel-btn" (click)="cancel()">Cancel</button>
+  </div>
+
+  <form class="template-form" [formGroup]="templateForm" (ngSubmit)="createTemplate()">
+
+    <!-- Template Basic Information -->
+    <section class="form-section">
+      <h2>Template Information</h2>
+      <div class="form-grid">
+        <div class="form-field full-width">
+          <label>Template Name *</label>
+          <input
+            type="text"
+            formControlName="name"
+            placeholder="e.g., server-cert-template or client-auth-template"
+          />
+          <p class="hint">
+            Use alphanumeric characters, hyphens, and underscores only
+          </p>
+          <div
+            class="error"
+            *ngIf="
+              templateForm.get('name')?.hasError('required') &&
+              templateForm.get('name')?.touched
+            "
+          >
+            Template name is required
+          </div>
+          <div
+            class="error"
+            *ngIf="
+              templateForm.get('name')?.hasError('pattern') &&
+              templateForm.get('name')?.touched
+            "
+          >
+            Template name can only contain letters, numbers, hyphens, and underscores
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CA Issuer Selection -->
+    <section class="form-section">
+      <h2>CA Issuer Selection *</h2>
+      <p class="hint info">
+        ℹ️ Select which CA will use this template for issuing certificates
+      </p>
+
+      <div class="loading-spinner" *ngIf="loading">
+        <div class="spinner"></div>
+        <p>Loading CA certificates...</p>
+      </div>
+
+      <div class="issuer-list" *ngIf="!loading && activeCAs.length > 0">
+        <button
+          type="button"
+          class="issuer-btn"
+          [class.active]="templateForm.get('caIssuerSerialNumber')?.value === ca.serialNumber"
+          (click)="selectIssuer(ca.serialNumber)"
+          *ngFor="let ca of activeCAs"
+        >
+          <div class="issuer-info">
+            <strong>{{ ca.commonName }}</strong>
+            <span class="issuer-meta">{{ ca.organization }}</span>
+            <span class="badge" [class.type-root]="ca.certificateType === 'ROOT_CA'"
+                                [class.type-intermediate]="ca.certificateType === 'INTERMEDIATE_CA'">
+              {{ ca.certificateType === 'ROOT_CA' ? 'Root CA' : 'Intermediate CA' }}
+            </span>
+          </div>
+        </button>
+      </div>
+
+      <div class="empty-state" *ngIf="!loading && activeCAs.length === 0">
+        <p>No active CA certificates found. Create a CA certificate first.</p>
+      </div>
+
+      <div
+        class="error"
+        *ngIf="
+          templateForm.get('caIssuerSerialNumber')?.hasError('required') &&
+          templateForm.get('caIssuerSerialNumber')?.touched
+        "
+      >
+        Please select a CA issuer
+      </div>
+    </section>
+
+    <!-- Validation Rules -->
+    <section class="form-section">
+      <h2>Validation Rules</h2>
+      <p class="hint info">
+        ℹ️ Define regex patterns to validate certificate requests
+      </p>
+
+      <div class="form-grid">
+        <div class="form-field full-width">
+          <label>Common Name (CN) Validation Regex *</label>
+          <input
+            type="text"
+            formControlName="cnValidationRegex"
+            placeholder="e.g., .*\\.ftn\\.com or ^[a-z0-9-]+\\.example\\.com$"
+          />
+          <p class="hint">
+            Certificate requests must match this pattern for the Common Name field
+          </p>
+          <div
+            class="error"
+            *ngIf="
+              templateForm.get('cnValidationRegex')?.hasError('required') &&
+              templateForm.get('cnValidationRegex')?.touched
+            "
+          >
+            CN validation regex is required
+          </div>
+
+          <!-- Test CN Regex -->
+          <div class="test-regex" *ngIf="templateForm.get('cnValidationRegex')?.value">
+            <label>Test CN Pattern</label>
+            <div class="test-input-group">
+              <input
+                type="text"
+                [value]="testCN"
+                (input)="testCN = $any($event.target).value; validateTestCN()"
+                placeholder="Test a value: e.g., webserver.ftn.com"
+              />
+              <span class="validation-icon" *ngIf="testCN">
+                {{ cnValid ? '✅' : '❌' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-field full-width">
+          <label>Subject Alternative Name (SAN) Validation Regex</label>
+          <input
+            type="text"
+            formControlName="sanValidationRegex"
+            placeholder="e.g., .*\\.ftn\\.com or leave empty to skip validation"
+          />
+          <p class="hint">
+            Optional: Validate Subject Alternative Names (DNS, IP, Email)
+          </p>
+
+          <!-- Test SAN Regex -->
+          <div class="test-regex" *ngIf="templateForm.get('sanValidationRegex')?.value">
+            <label>Test SAN Pattern</label>
+            <div class="test-input-group">
+              <input
+                type="text"
+                [value]="testSAN"
+                (input)="testSAN = $any($event.target).value; validateTestSAN()"
+                placeholder="Test a value: e.g., api.ftn.com"
+              />
+              <span class="validation-icon" *ngIf="testSAN">
+                {{ sanValid ? '✅' : '❌' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Certificate Constraints -->
+    <section class="form-section">
+      <h2>Certificate Constraints</h2>
+
+      <div class="form-field">
+        <label>Maximum TTL (Days) *</label>
+        <input
+          type="number"
+          formControlName="maxTTLDays"
+          min="1"
+          max="3650"
+          placeholder="e.g., 365"
+        />
+        <p class="hint">
+          Maximum validity period for certificates issued with this template (1-3650 days)
+        </p>
+        <div
+          class="error"
+          *ngIf="
+            templateForm.get('maxTTLDays')?.hasError('required') &&
+            templateForm.get('maxTTLDays')?.touched
+          "
+        >
+          Maximum TTL is required
+        </div>
+        <div
+          class="error"
+          *ngIf="
+            (templateForm.get('maxTTLDays')?.hasError('min') ||
+            templateForm.get('maxTTLDays')?.hasError('max')) &&
+            templateForm.get('maxTTLDays')?.touched
+          "
+        >
+          Maximum TTL must be between 1 and 3650 days
+        </div>
+      </div>
+    </section>
+
+    <!-- Extensions Configuration -->
+    <section class="form-section">
+      <h2>Certificate Extensions</h2>
+      <p class="hint info">
+        ℹ️ Select default extensions for certificates issued with this template
+      </p>
+
+      <!-- Key Usage -->
+      <div class="form-field">
+        <label>Key Usage</label>
+        <div class="checkbox-grid">
+          <label
+            class="checkbox-label"
+            *ngFor="let option of keyUsageOptions"
+          >
+            <input
+              type="checkbox"
+              [checked]="isKeyUsageSelected(option.value)"
+              (change)="onKeyUsageChange($event, option.value)"
+            />
+            <span>{{ option.label }}</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Extended Key Usage -->
+      <div class="form-field">
+        <label>Extended Key Usage</label>
+        <div class="checkbox-grid">
+          <label
+            class="checkbox-label"
+            *ngFor="let option of extendedKeyUsageOptions"
+          >
+            <input
+              type="checkbox"
+              [checked]="isExtendedKeyUsageSelected(option.value)"
+              (change)="onExtendedKeyUsageChange($event, option.value)"
+            />
+            <span>{{ option.label }}</span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Template Preview -->
+    <section class="form-section preview-section" *ngIf="templateForm.get('caIssuerSerialNumber')?.value">
+      <h2>Template Preview</h2>
+      <div class="preview-card">
+        <div class="preview-item">
+          <span class="preview-label">Template Name:</span>
+          <span class="preview-value">{{ templateForm.get('name')?.value || 'Not set' }}</span>
+        </div>
+        <div class="preview-item">
+          <span class="preview-label">CA Issuer:</span>
+          <span class="preview-value">{{ getSelectedIssuer()?.commonName || 'Not selected' }}</span>
+        </div>
+        <div class="preview-item">
+          <span class="preview-label">Max TTL:</span>
+          <span class="preview-value">{{ templateForm.get('maxTTLDays')?.value }} days</span>
+        </div>
+        <div class="preview-item">
+          <span class="preview-label">CN Regex:</span>
+          <span class="preview-value mono">{{ templateForm.get('cnValidationRegex')?.value || 'Not set' }}</span>
+        </div>
+        <div class="preview-item" *ngIf="templateForm.get('sanValidationRegex')?.value">
+          <span class="preview-label">SAN Regex:</span>
+          <span class="preview-value mono">{{ templateForm.get('sanValidationRegex')?.value }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Submit Actions -->
+    <div class="form-actions">
+      <button
+        type="submit"
+        class="submit-btn"
+        [disabled]="creating || !templateForm.valid"
+      >
+        {{ creating ? 'Creating Template...' : 'Create Template' }}
+      </button>
+      <button type="button" class="cancel-btn" (click)="cancel()">
+        Cancel
+      </button>
+    </div>
+  </form>
+</div>

@@ -11,10 +11,16 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CertificateService } from '../../../services/certificate.service';
 import { CreateCertificateRequest } from '../../../model/certificate-request.model';
 import { Certificate } from '../../../model/certificate.model';
-import { AdminService } from '../../../services/admin.service';  // ✅ IMPORT
-import { AuthService } from '../../../services/auth.service';    // ✅ IMPORT
+import { AdminService } from '../../../services/admin.service'; // ✅ IMPORT
+import { AuthService } from '../../../services/auth.service'; // ✅ IMPORT
 import { CAUserResponse } from '../../../model/ca-user.model';
-import { CertificateCsrUploadComponent, CSRUploadData } from './certificate-csr-upload/certificate-csr-upload.component';
+import {
+  CertificateCsrUploadComponent,
+  CSRUploadData,
+} from './certificate-csr-upload/certificate-csr-upload.component';
+import { TemplateService } from '../../../services/template.service';
+import { TemplateResponse } from '../../../model/template.model';
+
 interface SubjectAlternativeName {
   type: 'DNS' | 'IP' | 'EMAIL';
   value: string;
@@ -23,7 +29,12 @@ interface SubjectAlternativeName {
 @Component({
   selector: 'app-certificate-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatSnackBarModule, CertificateCsrUploadComponent ],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatSnackBarModule,
+    CertificateCsrUploadComponent,
+  ],
   templateUrl: './certificate-create.component.html',
   styleUrls: ['./certificate-create.component.scss'],
 })
@@ -33,12 +44,17 @@ export class CertificateCreateComponent implements OnInit {
   activeCAs: Certificate[] = [];
   loading: boolean = false;
   creating: boolean = false;
-  caUsers: CAUserResponse[] = [];  // ✅ DODAJ - lista CA korisnika
+  caUsers: CAUserResponse[] = []; // ✅ DODAJ - lista CA korisnika
   isCurrentUserAdmin: boolean = false;
   userOrganization: string = '';
   csrFile: File | null = null;
   private selectedIssuer?: Certificate;
 
+  // Template Selection
+  availableTemplates: TemplateResponse[] = [];
+  selectedTemplate: TemplateResponse | null = null;
+  templateCNHint: string = '';
+  templateSANHint: string = '';
 
   countries = [
     { code: 'RS', name: 'Serbia' },
@@ -75,8 +91,9 @@ export class CertificateCreateComponent implements OnInit {
     private fb: FormBuilder,
     private certificateService: CertificateService,
     private router: Router,
-    private adminService: AdminService,  // ✅ DODAJ
+    private adminService: AdminService, // ✅ DODAJ
     private authService: AuthService,
+    private templateService: TemplateService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -84,23 +101,36 @@ export class CertificateCreateComponent implements OnInit {
     this.initializeForm();
     this.checkIfAdmin();
     this.loadUserOrganization();
+    this.certificateForm
+      .get('issuerSerialNumber')
+      ?.valueChanges.subscribe((issuerSerial) => {
+        if (issuerSerial && this.selectedType === 'END_ENTITY') {
+          this.loadTemplatesForIssuer(issuerSerial);
+        }
+      });
   }
 
-   onCSRSelected(data: CSRUploadData): void {
+  onCSRSelected(data: CSRUploadData): void {
     this.csrFile = data.file;
     console.log('CSR selected:', data.fileName);
     console.log('Preview:', data.preview);
   }
 
-    onCSRCleared(): void {
+  onCSRCleared(): void {
     this.csrFile = null;
     console.log('CSR cleared');
   }
 
   checkIfAdmin(): void {
     this.isCurrentUserAdmin = this.authService.isAdmin();
-    console.log('🔍 checkIfAdmin - isCurrentUserAdmin:', this.isCurrentUserAdmin);
-    console.log('🔍 User role from AuthService:', this.authService.getUserRole());
+    console.log(
+      '🔍 checkIfAdmin - isCurrentUserAdmin:',
+      this.isCurrentUserAdmin
+    );
+    console.log(
+      '🔍 User role from AuthService:',
+      this.authService.getUserRole()
+    );
 
     if (this.isCurrentUserAdmin) {
       this.loadCAUsers();
@@ -115,7 +145,7 @@ export class CertificateCreateComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to load CA users', err);
-      }
+      },
     });
   }
 
@@ -131,13 +161,15 @@ export class CertificateCreateComponent implements OnInit {
           console.log('📋 My certificates:', certificates);
 
           // ✅ PRVO pokušaj naći sertifikat gde je isCA = true
-          let myCACert = certificates.find(c => c.isCA);
+          let myCACert = certificates.find((c) => c.isCA);
           console.log('🔍 Found CA certificate by isCA flag:', myCACert);
 
           // ✅ AKO ne postoji, traži INTERMEDIATE_CA ili ROOT_CA po tipu
           if (!myCACert) {
-            myCACert = certificates.find(c =>
-              c.certificateType === 'INTERMEDIATE_CA' || c.certificateType === 'ROOT_CA'
+            myCACert = certificates.find(
+              (c) =>
+                c.certificateType === 'INTERMEDIATE_CA' ||
+                c.certificateType === 'ROOT_CA'
             );
             console.log('🔍 Found CA certificate by type:', myCACert);
           }
@@ -145,17 +177,21 @@ export class CertificateCreateComponent implements OnInit {
           if (myCACert) {
             this.userOrganization = myCACert.organization;
             console.log('✅ Setting organization to:', this.userOrganization);
-            this.certificateForm.patchValue({ organization: this.userOrganization });
+            this.certificateForm.patchValue({
+              organization: this.userOrganization,
+            });
             this.certificateForm.get('organization')?.disable();
             console.log('✅ Organization field disabled');
           } else {
             console.warn('⚠️ No CA certificate found for this user!');
-            console.warn('⚠️ User cannot create certificates without a CA certificate');
+            console.warn(
+              '⚠️ User cannot create certificates without a CA certificate'
+            );
           }
         },
         error: (err) => {
           console.error('❌ Failed to load user organization', err);
-        }
+        },
       });
     } else {
       console.log('ℹ️ User is ADMIN, skipping organization lock');
@@ -180,87 +216,185 @@ export class CertificateCreateComponent implements OnInit {
       keyUsage: [[]],
       extendedKeyUsage: [[]],
       ownerId: [null],
+      templateName: [''],
     });
   }
-   selectOwner(userId: number | null): void {
+  selectOwner(userId: number | null): void {
     this.certificateForm.patchValue({ ownerId: userId });
   }
 
-
   selectType(type: 'ROOT_CA' | 'INTERMEDIATE_CA' | 'END_ENTITY'): void {
-  this.selectedType = type;
+    this.selectedType = type;
 
-  const issuerControl = this.certificateForm.get('issuerSerialNumber');
-  const cn = this.certificateForm.get('commonName');
-  const org = this.certificateForm.get('organization');
-  const ou = this.certificateForm.get('organizationalUnit');
-  const country = this.certificateForm.get('country');
-  const state = this.certificateForm.get('state');
-  const locality = this.certificateForm.get('locality');
-  const email = this.certificateForm.get('email');
-  const pathLength = this.certificateForm.get('pathLength');
+    const issuerControl = this.certificateForm.get('issuerSerialNumber');
+    const cn = this.certificateForm.get('commonName');
+    const org = this.certificateForm.get('organization');
+    const ou = this.certificateForm.get('organizationalUnit');
+    const country = this.certificateForm.get('country');
+    const state = this.certificateForm.get('state');
+    const locality = this.certificateForm.get('locality');
+    const email = this.certificateForm.get('email');
+    const pathLength = this.certificateForm.get('pathLength');
 
-  // Issuer validator (nije potreban za ROOT)
-  if (type === 'ROOT_CA') {
-    issuerControl?.clearValidators();
-  } else {
-    issuerControl?.setValidators([Validators.required]);
-    if (this.activeCAs.length === 0) this.loadActiveCAs();
-  }
-  issuerControl?.updateValueAndValidity();
-
-  if (type === 'END_ENTITY') {
-    // END ENTITY koristi CSR → sklanjamo validatore i gasimo polja
-    [cn, org, ou, country, state, locality, email].forEach(c => {
-      c?.clearValidators();
-      c?.updateValueAndValidity();
-      c?.disable({ emitEvent: false });
-    });
-
-    this.certificateForm.patchValue({
-      keyUsage: ['digitalSignature', 'keyEncipherment'],
-      extendedKeyUsage: ['serverAuth'],
-    });
-
-    pathLength?.disable({ emitEvent: false });
-  } else {
-    // CA tipovi → vraćamo CN/Org/Country kao required i palimo polja
-    [cn, org, country].forEach(c => {
-      c?.setValidators([Validators.required]);
-      c?.enable({ emitEvent: false });
-      c?.updateValueAndValidity();
-    });
-    [ou, state, locality, email].forEach(c => c?.enable({ emitEvent: false }));
-    email?.setValidators([Validators.email]);
-    email?.updateValueAndValidity();
-
-    if (type === 'INTERMEDIATE_CA') {
-      this.certificateForm.patchValue({
-        keyUsage: ['keyCertSign', 'cRLSign'],
-        extendedKeyUsage: [],
-        pathLength: 1,
-      });
-      pathLength?.enable({ emitEvent: false });
+    // Issuer validator (nije potreban za ROOT)
+    if (type === 'ROOT_CA') {
+      issuerControl?.clearValidators();
     } else {
-      // ROOT_CA
-      this.certificateForm.patchValue({
-        keyUsage: [],
-        extendedKeyUsage: [],
+      issuerControl?.setValidators([Validators.required]);
+      if (this.activeCAs.length === 0) this.loadActiveCAs();
+    }
+    issuerControl?.updateValueAndValidity();
+
+    if (type === 'END_ENTITY') {
+      // END ENTITY koristi CSR → sklanjamo validatore i gasimo polja
+      [cn, org, ou, country, state, locality, email].forEach((c) => {
+        c?.clearValidators();
+        c?.updateValueAndValidity();
+        c?.disable({ emitEvent: false });
       });
+
+      this.certificateForm.patchValue({
+        keyUsage: ['digitalSignature', 'keyEncipherment'],
+        extendedKeyUsage: ['serverAuth'],
+      });
+
       pathLength?.disable({ emitEvent: false });
+    } else {
+      // CA tipovi → vraćamo CN/Org/Country kao required i palimo polja
+      [cn, org, country].forEach((c) => {
+        c?.setValidators([Validators.required]);
+        c?.enable({ emitEvent: false });
+        c?.updateValueAndValidity();
+      });
+      [ou, state, locality, email].forEach((c) =>
+        c?.enable({ emitEvent: false })
+      );
+      email?.setValidators([Validators.email]);
+      email?.updateValueAndValidity();
+
+      if (type === 'INTERMEDIATE_CA') {
+        this.certificateForm.patchValue({
+          keyUsage: ['keyCertSign', 'cRLSign'],
+          extendedKeyUsage: [],
+          pathLength: 1,
+        });
+        pathLength?.enable({ emitEvent: false });
+      } else {
+        // ROOT_CA
+        this.certificateForm.patchValue({
+          keyUsage: [],
+          extendedKeyUsage: [],
+        });
+        pathLength?.disable({ emitEvent: false });
+      }
     }
   }
-}
-
 
   selectCountry(code: string): void {
     this.certificateForm.patchValue({ country: code });
   }
 
- selectIssuer(serialNumber: string): void {
-  this.certificateForm.patchValue({ issuerSerialNumber: serialNumber });
-  this.selectedIssuer = this.activeCAs.find(c => c.serialNumber === serialNumber);
-}
+  selectIssuer(serialNumber: string): void {
+    this.certificateForm.patchValue({ issuerSerialNumber: serialNumber });
+    this.selectedIssuer = this.activeCAs.find(
+      (c) => c.serialNumber === serialNumber
+    );
+
+    // Load templates for selected issuer
+    if (this.selectedType === 'END_ENTITY' && serialNumber) {
+      this.loadTemplatesForIssuer(serialNumber);
+    }
+  }
+
+  /**
+   * Load templates for selected issuer
+   */
+  loadTemplatesForIssuer(issuerSerial: string): void {
+    this.templateService.getTemplatesByIssuer(issuerSerial).subscribe({
+      next: (templates) => {
+        this.availableTemplates = templates;
+      },
+      error: (err) => {
+        console.error('Failed to load templates', err);
+        this.availableTemplates = [];
+      },
+    });
+  }
+
+  /**
+   * Select a template and apply its settings
+   */
+  selectTemplate(template: TemplateResponse): void {
+    this.selectedTemplate = template;
+    this.certificateForm.patchValue({ templateName: template.name });
+
+    // Apply template settings
+    this.certificateForm.patchValue({
+      templateName: template.name,
+      keyUsage: template.keyUsage,
+      extendedKeyUsage: template.extendedKeyUsage,
+    });
+
+    // Set max validity constraint
+    const maxYears = Math.floor(template.maxTTLDays / 365);
+    const validityControl = this.certificateForm.get('validityYears');
+    if (validityControl) {
+      validityControl.setValidators([
+        Validators.required,
+        Validators.min(1),
+        Validators.max(maxYears),
+      ]);
+      validityControl.updateValueAndValidity();
+    }
+
+    // Set validation hints
+    this.templateCNHint = `Must match pattern: ${template.cnValidationRegex}`;
+    if (template.sanValidationRegex) {
+      this.templateSANHint = `Must match pattern: ${template.sanValidationRegex}`;
+    }
+
+    this.snackBar.open(`Template "${template.name}" applied`, 'Close', {
+      duration: 2000,
+    });
+  }
+
+  /**
+   * Clear template selection
+   */
+  clearTemplate(): void {
+    this.selectedTemplate = null;
+    this.certificateForm.patchValue({ templateName: '' });
+    this.templateCNHint = '';
+    this.templateSANHint = '';
+
+    // Reset validity constraint
+    const validityControl = this.certificateForm.get('validityYears');
+    if (validityControl) {
+      validityControl.setValidators([
+        Validators.required,
+        Validators.min(1),
+        Validators.max(30),
+      ]);
+      validityControl.updateValueAndValidity();
+    }
+
+    this.snackBar.open('Template cleared', 'Close', { duration: 2000 });
+  }
+
+  /**
+   * Validate CN against template regex
+   */
+  validateCNAgainstTemplate(): boolean {
+    if (!this.selectedTemplate) return true;
+
+    const cn = this.certificateForm.get('commonName')?.value;
+    if (!cn) return false;
+
+    return this.templateService.validateAgainstRegex(
+      cn,
+      this.selectedTemplate.cnValidationRegex
+    );
+  }
   loadActiveCAs(): void {
     this.loading = true;
     this.certificateService.getActiveCAs().subscribe({
@@ -345,77 +479,78 @@ export class CertificateCreateComponent implements OnInit {
   }
 
   createCertificate(): void {
-  // ✅ ПОСЕБАН FLOW ЗА END_ENTITY - позови CSR метод
-  if (this.selectedType === 'END_ENTITY') {
-    this.createEndEntityFromCSR();
-    return;
-  }
-
-  // Валидација за ROOT_CA и INTERMEDIATE_CA
-  if (!this.certificateForm.valid) {
-    this.snackBar.open('Please fill in all required fields', 'Close', {
-      duration: 3000,
-    });
-    return;
-  }
-
-  const formValue = this.certificateForm.value;
-  const request: CreateCertificateRequest = {
-    commonName: formValue.commonName,
-    organization: this.certificateForm.get('organization')?.value,
-    organizationalUnit: formValue.organizationalUnit,
-    country: formValue.country,
-    state: formValue.state,
-    locality: formValue.locality,
-    email: formValue.email,
-    validityYears: formValue.validityYears,
-  };
-
-  // Додај issuerSerialNumber за INTERMEDIATE
-  if (this.selectedType !== 'ROOT_CA') {
-    request.issuerSerialNumber = formValue.issuerSerialNumber;
-  }
-
-  // Додај CA-specific поља за INTERMEDIATE
-  if (this.selectedType === 'INTERMEDIATE_CA') {
-    request.isCA = true;
-    request.pathLength = formValue.pathLength;
-    request.keyUsage =
-      formValue.keyUsage.length > 0
-        ? formValue.keyUsage
-        : ['keyCertSign', 'cRLSign'];
-
-    if (this.isCurrentUserAdmin && formValue.ownerId) {
-      request.ownerId = formValue.ownerId;
+    // ✅ ПОСЕБАН FLOW ЗА END_ENTITY - позови CSR метод
+    if (this.selectedType === 'END_ENTITY') {
+      this.createEndEntityFromCSR();
+      return;
     }
-  }
 
-  this.creating = true;
-
-  // Позив API-ја само за ROOT_CA и INTERMEDIATE_CA
-  let apiCall;
-  if (this.selectedType === 'ROOT_CA') {
-    apiCall = this.certificateService.createRootCA(request);
-  } else {
-    apiCall = this.certificateService.createIntermediateCA(request);
-  }
-
-  apiCall.subscribe({
-    next: (cert) => {
-      this.snackBar.open('Certificate created successfully!', 'Close', {
+    // Валидација за ROOT_CA и INTERMEDIATE_CA
+    if (!this.certificateForm.valid) {
+      this.snackBar.open('Please fill in all required fields', 'Close', {
         duration: 3000,
       });
-      this.router.navigate(['/certificates']);
-    },
-    error: (err) => {
-      const message =
-        err.error?.message || err.error || 'Failed to create certificate';
-      this.snackBar.open(message, 'Close', { duration: 5000 });
-      this.creating = false;
-    },
-  });
-}
-    createEndEntityFromCSR(): void {
+      return;
+    }
+
+    const formValue = this.certificateForm.value;
+    const request: CreateCertificateRequest = {
+      commonName: formValue.commonName,
+      organization: this.certificateForm.get('organization')?.value,
+      organizationalUnit: formValue.organizationalUnit,
+      country: formValue.country,
+      state: formValue.state,
+      locality: formValue.locality,
+      email: formValue.email,
+      validityYears: formValue.validityYears,
+    };
+
+    // Додај issuerSerialNumber за INTERMEDIATE
+    if (this.selectedType !== 'ROOT_CA') {
+      request.issuerSerialNumber = formValue.issuerSerialNumber;
+    }
+
+    // Додај CA-specific поља за INTERMEDIATE
+    if (this.selectedType === 'INTERMEDIATE_CA') {
+      request.isCA = true;
+      request.pathLength = formValue.pathLength;
+      request.keyUsage =
+        formValue.keyUsage.length > 0
+          ? formValue.keyUsage
+          : ['keyCertSign', 'cRLSign'];
+
+      if (this.isCurrentUserAdmin && formValue.ownerId) {
+        request.ownerId = formValue.ownerId;
+      }
+    }
+
+    this.creating = true;
+
+    // Позив API-ја само за ROOT_CA и INTERMEDIATE_CA
+    let apiCall;
+    if (this.selectedType === 'ROOT_CA') {
+      apiCall = this.certificateService.createRootCA(request);
+    } else {
+      apiCall = this.certificateService.createIntermediateCA(request);
+    }
+
+    apiCall.subscribe({
+      next: (cert) => {
+        this.snackBar.open('Certificate created successfully!', 'Close', {
+          duration: 3000,
+        });
+        this.router.navigate(['/certificates']);
+      },
+      error: (err) => {
+        const message =
+          err.error?.message || err.error || 'Failed to create certificate';
+        this.snackBar.open(message, 'Close', { duration: 5000 });
+        this.creating = false;
+      },
+    });
+  }
+  createEndEntityFromCSR(): void {
+    // 1. Osnovna validacija - CSR file
     if (!this.csrFile) {
       this.snackBar.open('Please select a CSR file', 'Close', {
         duration: 3000,
@@ -423,7 +558,9 @@ export class CertificateCreateComponent implements OnInit {
       return;
     }
 
-    const issuerSerialNumber = this.certificateForm.get('issuerSerialNumber')?.value;
+    // 2. Validacija - Issuer
+    const issuerSerialNumber =
+      this.certificateForm.get('issuerSerialNumber')?.value;
     if (!issuerSerialNumber) {
       this.snackBar.open('Please select an issuer CA', 'Close', {
         duration: 3000,
@@ -432,38 +569,91 @@ export class CertificateCreateComponent implements OnInit {
     }
 
     const validityYears = this.certificateForm.get('validityYears')?.value || 1;
+    const templateName =
+      this.certificateForm.get('templateName')?.value || null;
 
+    // ✅ 3. NOVA VALIDACIJA - Template provera
+    if (templateName && this.selectedTemplate) {
+      // Validacija TTL prema template-u
+      const requestedDays = validityYears * 365;
+      if (requestedDays > this.selectedTemplate.maxTTLDays) {
+        this.snackBar.open(
+          `Validity period (${validityYears} years) exceeds template maximum: ${this.selectedTemplate.maxTTLDays} days`,
+          'Close',
+          { duration: 5000 }
+        );
+        return;
+      }
+
+      // ✅ Upozorenje korisniku o template validaciji
+      const shouldProceed = confirm(
+        `This CSR will be validated against template "${this.selectedTemplate.name}".\n\n` +
+          `Rules:\n` +
+          `- CN must match: ${this.selectedTemplate.cnValidationRegex}\n` +
+          (this.selectedTemplate.sanValidationRegex
+            ? `- SAN must match: ${this.selectedTemplate.sanValidationRegex}\n`
+            : '') +
+          `- Max validity: ${this.selectedTemplate.maxTTLDays} days\n\n` +
+          `Continue?`
+      );
+
+      if (!shouldProceed) {
+        return;
+      }
+    }
+
+    // 4. Kreiraj sertifikat
     this.creating = true;
 
-    this.certificateService.createEndEntityFromCSR(
-      this.csrFile,
-      issuerSerialNumber,
-      validityYears
-    ).subscribe({
-      next: (response: any) => {
-        this.snackBar.open(
-          response.message || 'Certificate issued successfully!',
-          'Close',
-          { duration: 3000 }
-        );
-        
-        if (response.certificate && response.certificate.pemCertificate) {
-          this.downloadIssuedCertificate(response.certificate);
-        }
-        
-        this.router.navigate(['/certificates']);
-      },
-      error: (err) => {
-        const message = err.error?.message || 'Failed to create certificate from CSR';
-        this.snackBar.open(message, 'Close', { duration: 5000 });
-        this.creating = false;
-      },
-    });
-  }
+    this.certificateService
+      .createEndEntityFromCSR(
+        this.csrFile,
+        issuerSerialNumber,
+        validityYears,
+        templateName
+      )
+      .subscribe({
+        next: (response: any) => {
+          this.snackBar.open(
+            response.message || 'Certificate issued successfully!',
+            'Close',
+            { duration: 3000 }
+          );
 
-    downloadIssuedCertificate(certificate: any): void {
-    const blob = new Blob([certificate.pemCertificate], { 
-      type: 'application/x-pem-file' 
+          if (response.certificate && response.certificate.pemCertificate) {
+            this.downloadIssuedCertificate(response.certificate);
+          }
+
+          this.router.navigate(['/certificates']);
+        },
+        error: (err) => {
+          // ✅ Poboljšan error handling za template greške
+          let message = 'Failed to create certificate from CSR';
+
+          if (err.error?.error) {
+            message = err.error.error;
+          } else if (err.error?.message) {
+            message = err.error.message;
+          }
+
+          // Specifična poruka za template validaciju
+          if (message.includes('does not match') || message.includes('regex')) {
+            this.snackBar.open(
+              `❌ Template Validation Failed: ${message}`,
+              'Close',
+              { duration: 7000 }
+            );
+          } else {
+            this.snackBar.open(message, 'Close', { duration: 5000 });
+          }
+
+          this.creating = false;
+        },
+      });
+  }
+  downloadIssuedCertificate(certificate: any): void {
+    const blob = new Blob([certificate.pemCertificate], {
+      type: 'application/x-pem-file',
     });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -471,7 +661,7 @@ export class CertificateCreateComponent implements OnInit {
     link.download = `${certificate.commonName}_${certificate.serialNumber}.pem`;
     link.click();
     window.URL.revokeObjectURL(url);
-    
+
     this.snackBar.open('Certificate downloaded', 'Close', {
       duration: 2000,
     });
