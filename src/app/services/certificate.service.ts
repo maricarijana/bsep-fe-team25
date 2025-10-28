@@ -85,4 +85,18 @@ export class CertificateService {
       headers: this.getHeaders()
     });
   }
+
+  getUserPublicKey(userId: number): Observable<{ userId: string; publicKeyPem: string }> {
+  return this.http.get<{ userId: string; publicKeyPem: string }>(
+    `${this.apiUrl}/users/${userId}/public-key`,
+    { headers: this.getHeaders() }
+  );
 }
+getUserEndEntityCertificate(userId: number): Observable<Certificate> {
+  return this.http.get<Certificate>(
+    `${this.apiUrl}/users/${userId}/end-entity-certificate`,
+    { headers: this.getHeaders() }
+  );
+}
+}
+

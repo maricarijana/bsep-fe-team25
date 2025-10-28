@@ -15,11 +15,17 @@ import {
   changePasswordGuard,
   mustChangePasswordGuard,
 } from './guards/change-password.guard';
+
 import { adminGuard } from './guards/admin.guard';
 import { CrlViewerComponent } from './components/crl-viewer/crl-viewer.component';
 import { TemplateListComponent } from './components/certificates/templates/template-list/template-list.component';
 import { TemplateCreateComponent } from './components/certificates/templates/template-create/template-create.component';
 import { TemplateDetailsComponent } from './components/certificates/templates/template-details/template-details.component';
+import { PasswordListComponent } from './components/password-manager/password-list/password-list.component';
+import { PasswordCreateComponent } from './components/password-manager/password-create/password-create.component';
+import { SharedPasswordsComponent } from './components/password-manager/shared-passwords/shared-passwords.component';
+import { PasswordDetailComponent } from './components/password-manager/password-detail/password-detail.component';
+import { PasswordShareComponent } from './components/password-manager/password-share/password-share.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -61,6 +67,25 @@ export const routes: Routes = [
     ],
   },
   // Admin rute - backend provjerava role preko JWT tokena
+  {
+    path: 'admin/ca-users',
+    component: AdminDashboardComponent,
+    canActivate: [authGuard, mustChangePasswordGuard],
+  },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  // ✅ PASSWORD MANAGER ROUTES
+  {
+    path: 'password-manager',
+    canActivate: [authGuard, mustChangePasswordGuard],
+    children: [
+      { path: '', component: PasswordListComponent },
+      { path: 'create', component: PasswordCreateComponent },
+      { path: 'shared', component: SharedPasswordsComponent },
+      { path: ':id', component: PasswordDetailComponent },
+      { path: ':id/share', component: PasswordShareComponent },
+      { path: 'shared/:id', component: PasswordDetailComponent },
+    ],
+  },
   {
     path: 'admin/ca-users',
     component: AdminDashboardComponent,

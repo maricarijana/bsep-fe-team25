@@ -46,6 +46,7 @@ export class CertificateCreateComponent implements OnInit {
   creating: boolean = false;
   caUsers: CAUserResponse[] = []; // ✅ DODAJ - lista CA korisnika
   isCurrentUserAdmin: boolean = false;
+  isCurrentUserCA: boolean = false; // ✅ DODATO
   userOrganization: string = '';
   csrFile: File | null = null;
   private selectedIssuer?: Certificate;
@@ -99,7 +100,7 @@ export class CertificateCreateComponent implements OnInit {
 
   ngOnInit(): void {
     this.initializeForm();
-    this.checkIfAdmin();
+    this.checkUserRole(); // ✅ PROMENJENA METODA
     this.loadUserOrganization();
     this.certificateForm
       .get('issuerSerialNumber')
@@ -108,6 +109,28 @@ export class CertificateCreateComponent implements OnInit {
           this.loadTemplatesForIssuer(issuerSerial);
         }
       });
+
+    // ✅ Ako je običan korisnik, automatski setuj END_ENTITY
+    if (!this.isCurrentUserAdmin && !this.isCurrentUserCA) {
+      this.selectedType = 'END_ENTITY';
+      this.selectType('END_ENTITY');
+      this.loadActiveCAs();
+    }
+  }
+
+  // ✅ PROMENJENA METODA - proveri obe role
+  checkUserRole(): void {
+    this.isCurrentUserAdmin = this.authService.isAdmin();
+    this.isCurrentUserCA = this.authService.isCAUser();
+
+    console.log('🔍 checkUserRole:');
+    console.log('  - isAdmin:', this.isCurrentUserAdmin);
+    console.log('  - isCAUser:', this.isCurrentUserCA);
+
+    // Samo Admin učitava CA korisnike (za owner selection)
+    if (this.isCurrentUserAdmin) {
+      this.loadCAUsers();
+    }
   }
 
   onCSRSelected(data: CSRUploadData): void {
@@ -149,12 +172,13 @@ export class CertificateCreateComponent implements OnInit {
     });
   }
 
-  // ✅ NOVA METODA - Učitaj organizaciju CA korisnika i zaključaj polje
   loadUserOrganization(): void {
     console.log('🔍 loadUserOrganization called');
     console.log('🔍 isCurrentUserAdmin:', this.isCurrentUserAdmin);
+    console.log('🔍 isCurrentUserCA:', this.isCurrentUserCA);
 
-    if (!this.isCurrentUserAdmin) {
+    // Samo CA korisnik ima locked organizaciju
+    if (!this.isCurrentUserAdmin && this.isCurrentUserCA) {
       console.log('✅ User is CA_USER, loading certificates...');
       this.certificateService.getMyCertificates().subscribe({
         next: (certificates) => {
@@ -164,7 +188,6 @@ export class CertificateCreateComponent implements OnInit {
           let myCACert = certificates.find((c) => c.isCA);
           console.log('🔍 Found CA certificate by isCA flag:', myCACert);
 
-          // ✅ AKO ne postoji, traži INTERMEDIATE_CA ili ROOT_CA po tipu
           if (!myCACert) {
             myCACert = certificates.find(
               (c) =>
@@ -194,7 +217,9 @@ export class CertificateCreateComponent implements OnInit {
         },
       });
     } else {
-      console.log('ℹ️ User is ADMIN, skipping organization lock');
+      console.log(
+        'ℹ️ User is ADMIN or regular user, no organization lock needed'
+      );
     }
   }
 
@@ -236,7 +261,6 @@ export class CertificateCreateComponent implements OnInit {
     const email = this.certificateForm.get('email');
     const pathLength = this.certificateForm.get('pathLength');
 
-    // Issuer validator (nije potreban za ROOT)
     if (type === 'ROOT_CA') {
       issuerControl?.clearValidators();
     } else {
@@ -246,7 +270,6 @@ export class CertificateCreateComponent implements OnInit {
     issuerControl?.updateValueAndValidity();
 
     if (type === 'END_ENTITY') {
-      // END ENTITY koristi CSR → sklanjamo validatore i gasimo polja
       [cn, org, ou, country, state, locality, email].forEach((c) => {
         c?.clearValidators();
         c?.updateValueAndValidity();
@@ -257,10 +280,8 @@ export class CertificateCreateComponent implements OnInit {
         keyUsage: ['digitalSignature', 'keyEncipherment'],
         extendedKeyUsage: ['serverAuth'],
       });
-
       pathLength?.disable({ emitEvent: false });
     } else {
-      // CA tipovi → vraćamo CN/Org/Country kao required i palimo polja
       [cn, org, country].forEach((c) => {
         c?.setValidators([Validators.required]);
         c?.enable({ emitEvent: false });
@@ -280,7 +301,6 @@ export class CertificateCreateComponent implements OnInit {
         });
         pathLength?.enable({ emitEvent: false });
       } else {
-        // ROOT_CA
         this.certificateForm.patchValue({
           keyUsage: [],
           extendedKeyUsage: [],
@@ -479,13 +499,13 @@ export class CertificateCreateComponent implements OnInit {
   }
 
   createCertificate(): void {
-    // ✅ ПОСЕБАН FLOW ЗА END_ENTITY - позови CSR метод
+    // ✅ Ako je END_ENTITY — koristi CSR logiku i odmah izađi
     if (this.selectedType === 'END_ENTITY') {
       this.createEndEntityFromCSR();
       return;
     }
 
-    // Валидација за ROOT_CA и INTERMEDIATE_CA
+    // ✅ Validacija forme za ROOT_CA i INTERMEDIATE_CA
     if (!this.certificateForm.valid) {
       this.snackBar.open('Please fill in all required fields', 'Close', {
         duration: 3000,
@@ -494,6 +514,8 @@ export class CertificateCreateComponent implements OnInit {
     }
 
     const formValue = this.certificateForm.value;
+
+    // ✅ Osnovni deo zahteva
     const request: CreateCertificateRequest = {
       commonName: formValue.commonName,
       organization: this.certificateForm.get('organization')?.value,
@@ -505,35 +527,36 @@ export class CertificateCreateComponent implements OnInit {
       validityYears: formValue.validityYears,
     };
 
-    // Додај issuerSerialNumber за INTERMEDIATE
+    // ✅ Ako nije ROOT_CA — mora imati issuer
     if (this.selectedType !== 'ROOT_CA') {
       request.issuerSerialNumber = formValue.issuerSerialNumber;
     }
 
-    // Додај CA-specific поља за INTERMEDIATE
+    // ✅ Ako je INTERMEDIATE_CA — dodaj CA specifična polja
     if (this.selectedType === 'INTERMEDIATE_CA') {
       request.isCA = true;
       request.pathLength = formValue.pathLength;
       request.keyUsage =
-        formValue.keyUsage.length > 0
+        formValue.keyUsage?.length > 0
           ? formValue.keyUsage
           : ['keyCertSign', 'cRLSign'];
 
+      // Samo admin može postaviti ownerId
       if (this.isCurrentUserAdmin && formValue.ownerId) {
         request.ownerId = formValue.ownerId;
       }
     }
 
+    // ✅ Setuj flag da se onemogući dugme tokom kreiranja
     this.creating = true;
 
-    // Позив API-ја само за ROOT_CA и INTERMEDIATE_CA
-    let apiCall;
-    if (this.selectedType === 'ROOT_CA') {
-      apiCall = this.certificateService.createRootCA(request);
-    } else {
-      apiCall = this.certificateService.createIntermediateCA(request);
-    }
+    // ✅ Odaberi API poziv
+    const apiCall =
+      this.selectedType === 'ROOT_CA'
+        ? this.certificateService.createRootCA(request)
+        : this.certificateService.createIntermediateCA(request);
 
+    // ✅ Izvrši poziv
     apiCall.subscribe({
       next: (cert) => {
         this.snackBar.open('Certificate created successfully!', 'Close', {
@@ -549,8 +572,8 @@ export class CertificateCreateComponent implements OnInit {
       },
     });
   }
+
   createEndEntityFromCSR(): void {
-    // 1. Osnovna validacija - CSR file
     if (!this.csrFile) {
       this.snackBar.open('Please select a CSR file', 'Close', {
         duration: 3000,
@@ -651,6 +674,7 @@ export class CertificateCreateComponent implements OnInit {
         },
       });
   }
+
   downloadIssuedCertificate(certificate: any): void {
     const blob = new Blob([certificate.pemCertificate], {
       type: 'application/x-pem-file',

@@ -9,10 +9,13 @@
     [formGroup]="certificateForm"
     (ngSubmit)="createCertificate()"
   >
-    <!-- Certificate Type Selection -->
-    <section class="form-section">
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Certificate Type Selection - SAMO Admin i CA korisnik -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section class="form-section" *ngIf="isCurrentUserAdmin || isCurrentUserCA">
       <h2>Certificate Type</h2>
       <div class="type-buttons">
+        <!-- ✅ ROOT_CA - samo Admin -->
         <button
           type="button"
           class="type-btn"
@@ -23,20 +26,26 @@
           <h3>Root CA</h3>
           <p>Self-signed certificate at the top of the trust chain</p>
         </button>
+
+        <!-- ✅ INTERMEDIATE_CA - Admin ili CA -->
         <button
           type="button"
           class="type-btn"
           [class.active]="selectedType === 'INTERMEDIATE_CA'"
           (click)="selectType('INTERMEDIATE_CA')"
+          *ngIf="isCurrentUserAdmin || isCurrentUserCA"
         >
           <h3>Intermediate CA</h3>
           <p>Certificate Authority signed by another CA</p>
         </button>
+
+        <!-- ✅ END_ENTITY - Admin ili CA -->
         <button
           type="button"
           class="type-btn"
           [class.active]="selectedType === 'END_ENTITY'"
           (click)="selectType('END_ENTITY')"
+          *ngIf="isCurrentUserAdmin || isCurrentUserCA"
         >
           <h3>End Entity</h3>
           <p>Certificate for servers, clients, or applications</p>
@@ -44,15 +53,39 @@
       </div>
     </section>
 
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Info za običnog korisnika -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section
+      class="form-section"
+      *ngIf="!isCurrentUserAdmin && !isCurrentUserCA"
+    >
+      <h2>Request End Entity Certificate</h2>
+      <div class="info-box">
+        <p>ℹ️ <strong>How to request a certificate:</strong></p>
+        <ol>
+          <li>Generate a private key and CSR locally on your machine</li>
+          <li>Upload your CSR file below</li>
+          <li>Your certificate will be issued by a Certificate Authority</li>
+          <li>Download your certificate once it's ready</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- Basic Information -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <section class="form-section">
       <h2>Basic Information</h2>
 
+      <!-- ✅ CSR Upload - prikazano za END_ENTITY (SVI korisnici) -->
       <app-certificate-csr-upload
         *ngIf="selectedType === 'END_ENTITY'"
         (csrSelected)="onCSRSelected($event)"
         (csrCleared)="onCSRCleared()"
       ></app-certificate-csr-upload>
+
+      <!-- ✅ Forma - prikazano za ROOT_CA i INTERMEDIATE_CA -->
       <div *ngIf="selectedType !== 'END_ENTITY'" class="form-grid">
         <div class="form-field">
           <label>Common Name *</label>
@@ -175,7 +208,9 @@
       </div>
     </section>
 
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- Validity -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <section class="form-section">
       <h2>Validity Period</h2>
       <div class="form-field">
@@ -200,18 +235,18 @@
       </div>
     </section>
 
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- Issuer Selection (for non-ROOT_CA) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <section class="form-section" *ngIf="selectedType !== 'ROOT_CA'">
       <h2>Issuer Certificate</h2>
       <div class="form-field">
         <label>Select Issuer CA *</label>
 
-        <!-- ✅ Loading spinner -->
         <div class="loading" *ngIf="loading">
           <p>Loading available CA certificates...</p>
         </div>
 
-        <!-- ✅ CA lista -->
         <div class="issuer-list" *ngIf="!loading && activeCAs.length > 0">
           <button
             *ngFor="let ca of activeCAs"
@@ -235,14 +270,12 @@
             <span class="issuer-validity"
               >Valid until: {{ ca.validUntil | date : "mediumDate" }}</span
             >
-            <!-- ✅ Prikaz serial number (skraćen) -->
             <span class="issuer-serial" title="{{ ca.serialNumber }}">
               Serial: {{ ca.serialNumber.substring(0, 16) }}...
             </span>
           </button>
         </div>
 
-        <!-- ✅ Warning ako nema CA -->
         <div class="warning" *ngIf="!loading && activeCAs.length === 0">
           <p><strong>⚠️ No active CA certificates available.</strong></p>
           <p>
@@ -257,12 +290,12 @@
             type="button"
             class="link-btn"
             (click)="selectType('ROOT_CA')"
+            *ngIf="isCurrentUserAdmin"
           >
             Create Root CA
           </button>
         </div>
 
-        <!-- ✅ Error message -->
         <div
           class="error"
           *ngIf="
@@ -359,9 +392,7 @@
           ℹ️ If no owner is selected, the certificate will be assigned to you.
         </p>
 
-        <!-- CA korisnici lista -->
         <div class="owner-list" *ngIf="caUsers.length > 0">
-          <!-- Opcija: Admin za sebe (default) -->
           <button
             type="button"
             class="owner-btn"
@@ -375,7 +406,6 @@
             <span class="owner-info">Certificate will be owned by you</span>
           </button>
 
-          <!-- Opcije: CA korisnici -->
           <button
             *ngFor="let user of caUsers"
             type="button"
@@ -394,21 +424,21 @@
           </button>
         </div>
 
-        <!-- Ako nema CA korisnika -->
         <div class="warning" *ngIf="caUsers.length === 0">
           <p><strong>⚠️ No CA users found</strong></p>
           <p>The certificate will be assigned to you by default.</p>
         </div>
       </div>
     </section>
-    <!-- ✅✅✅ KRAJ NOVOG KODA ✅✅✅ -->
 
-    <!-- Extensions (for non-ROOT_CA) -->
-    <section class="form-section" *ngIf="selectedType !== 'ROOT_CA'">
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- Extensions - SAMO za INTERMEDIATE_CA -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section class="form-section" *ngIf="selectedType === 'INTERMEDIATE_CA'">
       <h2>Extensions</h2>
 
-      <!-- ✅ Path Length SAMO za INTERMEDIATE_CA -->
-      <div class="form-field" *ngIf="selectedType === 'INTERMEDIATE_CA'">
+      <!-- Path Length -->
+      <div class="form-field">
         <label>Path Length *</label>
         <input
           type="number"
@@ -436,98 +466,16 @@
             {{ option.label }}
           </label>
         </div>
-        <!-- ✅ DODAJ hint za CA -->
-        <p class="hint" *ngIf="selectedType === 'INTERMEDIATE_CA'">
+        <p class="hint">
           For CA certificates, "Key Cert Sign" and "CRL Sign" are typically
           required
         </p>
       </div>
-
-      <!-- Extended Key Usage SAMO za END_ENTITY -->
-      <div class="form-field" *ngIf="selectedType === 'END_ENTITY'">
-        <label>Extended Key Usage</label>
-        <div class="checkbox-group">
-          <label
-            class="checkbox-label"
-            *ngFor="let option of extendedKeyUsageOptions"
-          >
-            <input
-              type="checkbox"
-              [checked]="isExtendedKeyUsageSelected(option.value)"
-              (change)="onExtendedKeyUsageChange($event, option.value)"
-            />
-            {{ option.label }}
-          </label>
-        </div>
-      </div>
-
-      <!-- Subject Alternative Names SAMO za END_ENTITY -->
-      <div class="form-field" *ngIf="selectedType === 'END_ENTITY'">
-        <label>Subject Alternative Names</label>
-        <div class="san-list">
-          <div
-            class="san-item"
-            *ngFor="let san of subjectAlternativeNames; let i = index"
-          >
-            <div class="san-type-buttons">
-              <button
-                type="button"
-                class="san-type-btn"
-                [class.active]="san.type === 'DNS'"
-                (click)="updateSanType(i, 'DNS')"
-              >
-                DNS
-              </button>
-              <button
-                type="button"
-                class="san-type-btn"
-                [class.active]="san.type === 'IP'"
-                (click)="updateSanType(i, 'IP')"
-              >
-                IP
-              </button>
-              <button
-                type="button"
-                class="san-type-btn"
-                [class.active]="san.type === 'EMAIL'"
-                (click)="updateSanType(i, 'EMAIL')"
-              >
-                Email
-              </button>
-            </div>
-            <input
-              type="text"
-              class="san-value-input"
-              [value]="san.value"
-              (input)="updateSanValue(i, $event)"
-              [placeholder]="
-                san.type === 'DNS'
-                  ? 'example.com'
-                  : san.type === 'IP'
-                  ? '192.168.1.1'
-                  : 'user@example.com'
-              "
-            />
-            <button
-              type="button"
-              class="remove-btn"
-              (click)="removeSubjectAlternativeName(i)"
-            >
-              Remove
-            </button>
-          </div>
-        </div>
-        <button
-          type="button"
-          class="add-btn"
-          (click)="addSubjectAlternativeName()"
-        >
-          Add Subject Alternative Name
-        </button>
-      </div>
     </section>
 
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- Form Actions -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <div class="form-actions">
       <button type="button" class="cancel-btn" (click)="cancel()">
         Cancel
@@ -537,7 +485,13 @@
         class="submit-btn"
         [disabled]="!certificateForm.valid || creating"
       >
-        <span *ngIf="!creating">Create Certificate</span>
+        <span *ngIf="!creating">
+          {{
+            selectedType === "END_ENTITY"
+              ? "Request Certificate"
+              : "Create Certificate"
+          }}
+        </span>
         <span *ngIf="creating">Creating...</span>
       </button>
     </div>

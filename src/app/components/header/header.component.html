@@ -2,27 +2,22 @@
   <div class="header-content">
     <a routerLink="/home" class="logo">BSEP Sistem</a>
 
-    <nav class="nav-links" *ngIf="isAdmin() || isCAUser()">
-      <a routerLink="/certificates" class="nav-link">Certificates</a>
+    <nav class="nav-links">
+      <!-- ✅ Certificates - SVI ulogovani korisnici -->
+      <a routerLink="/certificates" class="nav-link"> 📜 Certificates </a>
+
+      <!-- ✅ Password Manager - SVI ulogovani korisnici -->
+      <a routerLink="/password-manager" class="nav-link">
+        🔐 Password Manager
+      </a>
+
+      <!-- Admin Panel - samo Admin -->
       <a
         routerLink="/admin/ca-users"
         class="nav-link admin-link"
         *ngIf="isAdmin()"
-        >Admin Panel</a
       >
-      <a
-        routerLink="/crl-viewer"
-        routerLinkActive="active"
-        *ngIf="isAdmin() || isCAUser()"
-      >
-        🔍 CRL Viewer
-      </a>
-      <a
-        routerLink="/certificates/templates"
-        routerLinkActive="active"
-        *ngIf="isAdmin() || isCAUser()"
-      >
-        Templates
+        👤 Admin Panel
       </a>
     </nav>
 
@@ -43,7 +38,6 @@
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
       </a>
-
       <button class="logout-btn" (click)="logout()">Logout</button>
     </div>
   </div>

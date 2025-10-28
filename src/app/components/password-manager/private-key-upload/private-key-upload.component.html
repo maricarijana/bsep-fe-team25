@@ -1,0 +1,68 @@
+<!-- src/app/password-manager/private-key-upload/private-key-upload.component.html -->
+
+<div class="private-key-upload">
+  <div class="info-box">
+    <h3>🔐 Upload Your Private Key</h3>
+    <p>
+      To decrypt this password, you need to upload your private key file (.pem) 
+      that corresponds to the certificate used for encryption.
+    </p>
+    <div class="warning-box">
+      <p>⚠️ <strong>Important:</strong></p>
+      <ul>
+        <li>Your private key <strong>never leaves your browser</strong></li>
+        <li>Decryption happens <strong>locally on your computer</strong></li>
+        <li>The key is <strong>NOT uploaded to the server</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="file-upload-section">
+    <label for="private-key-input" class="file-label">
+      Private Key File *
+    </label>
+
+    <div class="file-upload-wrapper">
+      <input
+        type="file"
+        id="private-key-input"
+        accept=".pem,.key"
+        (change)="onPrivateKeyFileSelected($event)"
+        class="file-input"
+      />
+      <label for="private-key-input" class="file-upload-btn">
+        📁 Choose Private Key File
+      </label>
+      
+      <span class="file-name" *ngIf="!privateKeyFileName && !isLoading">
+        No file selected
+      </span>
+      
+      <span class="file-name loading" *ngIf="isLoading">
+        Loading...
+      </span>
+      
+      <span class="file-name selected" *ngIf="isKeyLoaded && privateKeyFileName">
+        ✅ {{ privateKeyFileName }}
+      </span>
+      
+      <button
+        *ngIf="isKeyLoaded"
+        type="button"
+        class="clear-btn"
+        (click)="clearPrivateKey()"
+        title="Clear private key"
+      >
+        ✕ Clear
+      </button>
+    </div>
+
+    <div class="error" *ngIf="privateKeyError">
+      {{ privateKeyError }}
+    </div>
+
+    <div class="success-message" *ngIf="isKeyLoaded && !privateKeyError">
+      ✅ Private key loaded successfully! You can now decrypt the password.
+    </div>
+  </div>
+</div>
