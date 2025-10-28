@@ -71,6 +71,7 @@ export const routes: Routes = [
       { path: 'shared', component: SharedPasswordsComponent },
       { path: ':id', component: PasswordDetailComponent },
       { path: ':id/share', component: PasswordShareComponent },
+      {path: 'shared/:id', component: PasswordDetailComponent}
     ],
   },
   {

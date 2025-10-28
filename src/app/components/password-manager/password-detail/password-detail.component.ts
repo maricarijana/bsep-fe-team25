@@ -35,12 +35,21 @@ export class PasswordDetailComponent implements OnInit {
     private snackBar: MatSnackBar
   ) {}
 
-  ngOnInit(): void {
-    const itemId = this.route.snapshot.paramMap.get('id');
-    if (itemId) {
-      this.loadPasswordDetail(Number(itemId));
+ ngOnInit(): void {
+  const itemId = Number(this.route.snapshot.paramMap.get('id'));
+  
+  // ✅ DODAJ - Proveri da li je shared
+  this.route.url.subscribe(segments => {
+    const isShared = segments.some(s => s.path === 'shared');
+    
+    if (isShared) {
+      this.loadSharedPasswordDetail(itemId);  // ✅ Za deljene
+    } else {
+      this.loadPasswordDetail(itemId);        // ✅ Za svoje
     }
-  }
+  });
+}
+  
 
   loadPasswordDetail(itemId: number): void {
     this.loading = true;
@@ -57,6 +66,33 @@ export class PasswordDetailComponent implements OnInit {
       }
     });
   }
+  loadSharedPasswordDetail(shareId: number): void {
+  this.loading = true;
+  this.passwordService.getReceivedShareDetail(shareId).subscribe({
+    next: (share) => {
+      // ✅ Mapiranje SharePasswordResponse → PasswordItemResponse
+      this.passwordItem = {
+        id: share.id,
+        website: share.siteLabel,           // ✅ Backend šalje siteLabel
+        username: share.loginHandle,        // ✅ Backend šalje loginHandle
+        ciphertextB64: share.ciphertextB64, // ✅ Recipient verzija
+        createdAt: share.createdAt,
+        ownerEmail: share.sharedByEmail,    // ✅ Ko je podelio
+        ownerId: share.sharedByUserId,
+        encryptionCertificateId: share.recipientCertificateId,
+        encryptionCertificateSerialNumber: share.recipientCertificateSerialNumber,
+        encryptionCertificateCommonName: share.sharedWithEmail
+      };
+      this.loading = false;
+    },
+    error: (error) => {
+      console.error('Failed to load shared password:', error);
+      this.snackBar.open('Failed to load shared password', 'Close', { duration: 3000 });
+      this.loading = false;
+      this.router.navigate(['/password-manager/shared']);
+    }
+  });
+}
 
   onPrivateKeyLoaded(keyData: PrivateKeyData): void {
     this.privateKeyData = keyData;
